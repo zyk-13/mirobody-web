@@ -1,0 +1,13 @@
+{
+  "name": "Mirobody 健康档案",
+  "short_name": "健康档案",
+  "description": "家庭健康数据与 AI 问答",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#faf9f7",
+  "theme_color": "#1f3a8a",
+  "icons": [
+    { "src": "/mirobody.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

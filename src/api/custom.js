@@ -26,3 +26,8 @@ export const getMemberOrder = (signal) => {
 export const saveMemberOrder = (ids) => {
   return mcpRequestInstance.put("/api/custom/members/order", { ids });
 };
+
+/** 备份目录现状：份数、总大小、最新一份。目录没挂进来时 mounted=false。 */
+export const getBackupStatus = (signal) => {
+  return mcpRequestInstance.get("/api/custom/backup/status", { signal });
+};

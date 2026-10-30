@@ -13,6 +13,7 @@ import { LANGUAGE_LIST } from "../../enum/lang";
 import { ACCESS_TOKEN, LANGUAGE, USER_EMAIL } from "../../enum/storage";
 import { clearAuthenticationData } from "../../utils/auth";
 import api from "../../api";
+import consola from "consola";
 import styles from "./index.module.scss";
 
 /* ---------------------------------------------------------------- 自定义接口 */
@@ -168,6 +169,9 @@ export default function Settings() {
   const [editing, setEditing] = useState(null); // 正在编辑的模型名
   const [draft, setDraft] = useState(null);
   const [busy, setBusy] = useState(false);
+  // 数据与备份
+  const [backup, setBackup] = useState(null); // null = 还没读回来
+  const [exporting, setExporting] = useState(false);
   // 模型列表默认只露 5 条：13 个模型铺开会把「界面」「MCP」两节挤到两屏之后，
   // 设置页变成一条长长的模型清单 —— 那正是「设置项杂乱」的观感来源。
   const [showAllModels, setShowAllModels] = useState(false);
@@ -202,6 +206,72 @@ export default function Settings() {
   useEffect(() => {
     loadModels();
   }, [loadModels]);
+
+  // 备份状态：独立请求，失败不影响页面其余部分
+  useEffect(() => {
+    let alive = true;
+    api
+      .getBackupStatus()
+      .then((res) => alive && setBackup(res || { mounted: false }))
+      .catch(() => alive && setBackup({ mounted: false, error: true }));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // 完整数据导出：NDJSON 流，必须走 fetch 带 Authorization —— 直接把地址丢给
+  // 浏览器会是一次无鉴权请求（401）。拿到 blob 再用 a[download] 落地。
+  const exportData = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const res = await fetch("/api/user/data-export", {
+        headers: {
+          Accept: "application/x-ndjson",
+          Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN) || ""}`,
+        },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `mirobody-${new Date().toISOString().slice(0, 10)}.ndjson`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      consola.error("Settings: export failed", e);
+      // 用模型区同一个错误位没必要；这里给一句即时反馈
+      window.alert(t("settings_export_failed"));
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // 备份时间由浏览器按本地时区渲染：服务端在 UTC 容器里，直接给字符串会早 8 小时
+  const fmtTime = (epoch) =>
+    epoch
+      ? new Date(epoch * 1000).toLocaleString(i18n.language === "en" ? "en-US" : "zh-CN", {
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "—";
+
+  const fmtSize = (bytes) => {
+    if (!bytes) return "0 B";
+    const units = ["B", "KB", "MB", "GB"];
+    let v = bytes;
+    let i = 0;
+    while (v >= 1024 && i < units.length - 1) {
+      v /= 1024;
+      i += 1;
+    }
+    return `${v.toFixed(v >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
+  };
 
   const changeLanguage = (code) => {
     i18n.changeLanguage(code);
@@ -445,6 +515,57 @@ export default function Settings() {
                   {t("settings_show_less")}
                 </button>
               )}
+            </section>
+
+            {/* ── 数据与备份 ─────────────────────────────────────── */}
+            <section className={styles.card}>
+              <div className={styles.card_head}>
+                <span className={styles.card_title}>{t("settings_backup")}</span>
+              </div>
+              <p className={styles.hint}>{t("settings_backup_hint")}</p>
+
+              <div className={styles.row}>
+                <div className={styles.row_label}>{t("settings_backup_latest")}</div>
+                <div
+                  className={`${styles.value_text} ${
+                    backup && backup.mounted && backup.count === 0
+                      ? styles.value_warn
+                      : ""
+                  }`}
+                >
+                  {backup === null
+                    ? "—"
+                    : !backup.mounted
+                      ? t("settings_backup_unmounted")
+                      : backup.count === 0
+                        ? t("settings_backup_none")
+                        : `${fmtTime(backup.latest.mtime)} · ${fmtSize(backup.latest.size)}`}
+                </div>
+              </div>
+
+              <div className={styles.row}>
+                <div className={styles.row_label}>{t("settings_backup_count")}</div>
+                <div className={styles.value_text}>
+                  {backup && backup.mounted
+                    ? t("settings_backup_count_value", {
+                        n: backup.count,
+                        size: fmtSize(backup.total_bytes),
+                      })
+                    : "—"}
+                </div>
+              </div>
+
+              <div className={styles.backup_actions}>
+                <button
+                  type="button"
+                  className={styles.btn_ghost}
+                  onClick={exportData}
+                  disabled={exporting}
+                >
+                  {exporting ? t("settings_exporting") : t("settings_export")}
+                </button>
+                <span className={styles.hint}>{t("settings_export_hint")}</span>
+              </div>
             </section>
 
             {/* ── 界面 ───────────────────────────────────────────── */}

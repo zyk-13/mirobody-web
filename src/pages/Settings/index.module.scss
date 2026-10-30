@@ -492,3 +492,22 @@
     background-position: 0 50%;
   }
 }
+
+/* 数据与备份：右侧是一列可读的值（时间、大小），不是输入控件 */
+.value_text {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.value_warn {
+  color: var(--color-danger);
+}
+
+.backup_actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
