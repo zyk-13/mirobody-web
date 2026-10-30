@@ -6,8 +6,12 @@
   // The Data page's "exp1" title sits on that line too.
   min-height: 88px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  /* 纵向堆叠：第一行成员横排，第二行标题 + 模型 + 右侧动作。
+     原来是单行 space-between，加成员栏后必须换方向。 */
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--space-2);
   /* The side gutter belongs on this un-capped outer element, the way
      .input_wrapper and ContentList's .wrapper do it. It used to sit on .inner,
      i.e. INSIDE the --layout-max box, so the title and "query for" were
@@ -25,6 +29,17 @@
     gap: 8px;
     padding: 8px 12px;
   }
+}
+
+// 成员横排所在的行：不加额外内边距，跟随 .header 的 gutter
+.person_row {
+  width: 100%;
+  display: flex;
+}
+
+.m_person {
+  width: 100%;
+  overflow-x: auto;
 }
 
 // Two rows, both space-between → left items share the left edge and right items

@@ -72,13 +72,8 @@
   }
 }
 
-/* One group per nav section. The rule between them is what makes 工作区 and
-   管理 read as two different kinds of place rather than one list of four. */
-.section + .section {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--color-border);
-}
+/* 单组平铺：不再有组间分隔线。上游靠这条线区分「工作区 / 管理」，
+   私有部署只有一个列表，留着反而像一条断掉的横线。 */
 
 .section_label {
   padding: 10px 8px 6px;

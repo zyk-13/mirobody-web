@@ -1,0 +1,18 @@
+/* 本人区：身份条 + 字段行本来各带一套 border/radius/background，上下叠起来
+   是两张卡、中间一道缝 —— 读起来像「头像卡」和「资料卡」两件不相干的东西。
+   包一层外卡，内部一律去边框去圆角去底色，合成一整块。
+
+   子选择器优先级（0,2,0）高于单类（0,1,0），不用 !important 也能压住
+   Profile / CareCircle 那两个模块里的 .identity / .rows。 */
+.me_card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  overflow: hidden;
+
+  > * {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+  }
+}

@@ -1,132 +1,89 @@
-import { useEffect, useMemo, useState } from "react";
-import { Popover } from "antd";
-import { IconCheck, IconChevronDown } from "@tabler/icons-react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useDriveStore } from "../../store/Drive";
 import { useAccountStore } from "../../store/account";
 import styles from "./index.module.scss";
 
-const isSyntheticEmail = (email) => /^member_[0-9a-f]+@/i.test(email || "");
-
 const initialOf = (user) =>
   (user.name || user.nickname || user.email || "").trim().charAt(0).toUpperCase() ||
   "?";
 
+/** 接口返回的 gender 是英文原值（male/female/other），要翻成当前语言 */
+const genderLabel = (t, raw) => {
+  const key = String(raw || "").toLowerCase();
+  return ["male", "female", "other"].includes(key) ? t(key) : "";
+};
+
 /**
- * Whose records this page is showing, and the switch for changing it.
+ * 当前在查看谁的记录 —— 横排一栏，点谁切谁。
  *
- * It became a switcher when the care circle moved out of the sidebar and onto
- * its own page: the roster was the only way to change person, so the page that
- * displays one person's data now carries the control. Same row anatomy as the
- * chat composer's 帮他问 picker and the care-circle cards — one roster, one
- * way of reading it.
+ * 私有部署改造。上游这里是一个下拉：页面标题就是触发器，点开弹层再选人。
+ * 三个人以下时下拉纯属多一次点击，且「当前是谁」要读完标题才知道。现在所有
+ * 成员平铺成一排，当前项高亮，切换是直接写 store —— 没有弹层、没有动画等待、
+ * 没有路由跳转，点下去同一个渲染帧就换掉。
+ *
+ * 这也顺带消灭了旧注入层那套「点开下拉 → 轮询等选项 → 点选项」的模拟点击：
+ * 那套逻辑在页面切换时会因为节点被反复创建/销毁而抖动，且在没有该下拉的页面
+ * （对话、人员档案）上完全点不动。
  */
 const DriveHeader = () => {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const current_drive_user_id = useDriveStore(
-    (state) => state.current_drive_user_id,
-  );
-  const setCurrentDriveUserId = useDriveStore(
-    (state) => state.setCurrentDriveUserId,
-  );
-  const beneficiary_users = useAccountStore((state) => state.beneficiary_users);
-  const current_drive_user = useMemo(
-    () => beneficiary_users.find((user) => user.id === current_drive_user_id),
-    [beneficiary_users, current_drive_user_id],
+  const current_drive_user_id = useDriveStore((s) => s.current_drive_user_id);
+  const setCurrentDriveUserId = useDriveStore((s) => s.setCurrentDriveUserId);
+  const beneficiary_users = useAccountStore((s) => s.beneficiary_users);
+
+  // can_view === false 的成员本来就不给看数据，列出来只会点了没反应
+  const members = useMemo(
+    () => (beneficiary_users || []).filter((u) => u.can_view !== false),
+    [beneficiary_users],
   );
 
-  // 给外部注入层（patches/frontend/app.js 的人物栏）一个直接切人的入口。
-  // 否则外部只能模拟「点开下拉 → 等选项渲染 → 点选项」，整套动画 1-2 秒，
-  // 观感就是「切换不够流畅」。这里用 id 反查真实对象，避免字符串/数字类型
-  // 不一致导致 current_drive_user 找不到、整个页头消失。
-  useEffect(() => {
-    window.__mbSetDriveUser = (id) => {
-      const target = useAccountStore
-        .getState()
-        .beneficiary_users.find((u) => String(u.id) === String(id));
-      if (target) setCurrentDriveUserId(target.id);
-    };
-    return () => {
-      delete window.__mbSetDriveUser;
-    };
-  }, [setCurrentDriveUserId]);
+  if (members.length === 0) return null;
 
-  if (!current_drive_user) return null;
+  // current_drive_user_id 为 null 时上游语义是「本人」，此时高亮 is_current_user
+  const activeId =
+    current_drive_user_id ??
+    (members.find((u) => u.is_current_user) || {}).id ??
+    null;
 
   const pick = (user) => {
-    setOpen(false);
-    if (user.id !== current_drive_user_id) setCurrentDriveUserId(user.id);
+    if (String(user.id) === String(activeId)) return;
+    setCurrentDriveUserId(user.id);
   };
 
-  const content = (
-    <div className={styles.panel} role="listbox">
-      {beneficiary_users.filter((user) => user.can_view !== false).map((user) => {
-        const isActive = user.id === current_drive_user_id;
-        const email = isSyntheticEmail(user.email) ? "" : user.email;
-        const details = [
-          email,
+  return (
+    <div className={styles.bar} role="tablist" aria-label={t("people")}>
+      {members.map((user) => {
+        const isActive = String(user.id) === String(activeId);
+        const name = user.name || user.nickname || "";
+        const meta = [
+          user.is_current_user ? t("me") : genderLabel(t, user.gender),
           user.age ? `${t("age")} ${user.age}` : "",
-          user.blood_type ? `${t("blood_type")} ${user.blood_type}` : "",
-        ].filter(Boolean);
+        ]
+          .filter(Boolean)
+          .join(" · ");
 
         return (
           <button
             type="button"
             key={user.id}
-            role="option"
+            role="tab"
             aria-selected={isActive}
-            className={`${styles.option} ${isActive ? styles.option_active : ""}`}
+            className={`${styles.chip} ${isActive ? styles.chip_active : ""}`}
             onClick={() => pick(user)}
+            data-mb-person={name}
           >
-            <span className={styles.option_avatar}>{initialOf(user)}</span>
-            <span className={styles.option_body}>
-              <span className={styles.option_name_row}>
-                <span className={styles.option_name}>
-                  {user.name || user.nickname || ""}
-                </span>
-                {user.is_current_user && (
-                  <span className={styles.option_badge}>{t("me")}</span>
-                )}
-              </span>
-              {details.length > 0 && (
-                <span className={styles.option_detail}>
-                  {details.join(" · ")}
-                </span>
-              )}
+            <span className={styles.avatar} aria-hidden="true">
+              {initialOf(user)}
             </span>
-            {isActive && <IconCheck className={styles.option_check} size={16} stroke={2.5} />}
+            <span className={styles.text}>
+              <span className={styles.name}>{name}</span>
+              {meta && <span className={styles.meta}>{meta}</span>}
+            </span>
           </button>
         );
       })}
     </div>
-  );
-
-  const name =
-    current_drive_user.nickname || current_drive_user.name || "";
-
-  return (
-    <Popover
-      content={content}
-      trigger="click"
-      placement="bottomLeft"
-      arrow={false}
-      open={open}
-      onOpenChange={setOpen}
-      classNames={{ root: styles.overlay }}
-      destroyOnHidden
-    >
-      <button
-        type="button"
-        id="drive_header"
-        className={styles.trigger}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-      >
-        <span className={styles.trigger_name}>{name}</span>
-        <IconChevronDown className={styles.trigger_caret} size={13} stroke={1.8} />
-      </button>
-    </Popover>
   );
 };
 

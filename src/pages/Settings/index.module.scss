@@ -1,0 +1,465 @@
+/* 设置页：一页放完全部配置。卡片式分区，与 人员档案 页共用同一套度量，
+   不引入第二套视觉语言（旧的自建 settings.html 就是死在这上面 —— 它自成
+   一套配色与间距，和主界面并排放像两个产品）。 */
+
+.page {
+  width: 100vw;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.scroll {
+  flex: 1;
+  overflow: auto;
+  min-width: 0;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--layout-gutter) var(--space-12);
+}
+
+.head {
+  margin-bottom: var(--space-1);
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+.sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+/* ---------------------------------------------------------------- 卡片 */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.card_head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.card_title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: 0.01em;
+}
+
+.hint {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
+.error {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.footnote {
+  padding-top: var(--space-2);
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+}
+
+/* ---------------------------------------------------------------- 账号 */
+.account_row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.account_email {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: 2px;
+}
+
+/* ---------------------------------------------------------------- 跳转行 */
+.link_row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--t-fast),
+    background-color var(--t-fast);
+
+  &:hover {
+    border-color: var(--color-border-strong);
+    background: var(--color-surface);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+.link_icon {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--color-info-bg);
+  color: var(--color-accent);
+}
+
+.link_body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.link_title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.link_chevron {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+/* ---------------------------------------------------------------- 按钮 */
+.btn_primary,
+.btn_ghost,
+.btn_ghost_sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color var(--t-fast),
+    border-color var(--t-fast),
+    color var(--t-fast);
+}
+
+.btn_primary {
+  min-width: 88px;
+  padding: 9px 18px;
+  border: 1px solid var(--color-navy);
+  background: var(--color-navy);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+
+  &:hover:not(:disabled) {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.btn_ghost {
+  padding: 8px 16px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+
+  &:hover {
+    border-color: var(--color-border-strong);
+    color: var(--color-text-primary);
+    background: var(--color-bg-soft);
+  }
+}
+
+.btn_ghost_sm {
+  padding: 5px 11px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+
+  &:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+}
+
+.icon_btn {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--t-fast),
+    color var(--t-fast);
+
+  &:hover {
+    background: var(--color-bg-soft);
+    color: var(--color-text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+}
+
+.icon_btn_danger:hover {
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+
+/* ---------------------------------------------------------------- 模型列表 */
+.model_list {
+  display: flex;
+  flex-direction: column;
+}
+
+.model_item {
+  border-top: 1px solid var(--color-border-soft);
+
+  &:first-child {
+    border-top: none;
+  }
+}
+
+.model_row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+}
+
+.model_main {
+  flex: 1;
+  min-width: 0;
+}
+
+.model_name_line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.model_name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model_meta {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model_actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+
+.pill {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-soft);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.pill_ok {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+/* ---------------------------------------------------------------- 表单 */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-info-bg);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light);
+}
+
+.form_grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+
+  @media (max-width: 680px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+
+  > span {
+    font-size: 11.5px;
+    color: var(--color-text-secondary);
+  }
+
+  input,
+  select {
+    box-sizing: border-box;
+    width: 100%;
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    font-family: inherit;
+    font-size: 13px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px var(--color-info-bg);
+    }
+  }
+}
+
+.field_wide {
+  grid-column: 1 / -1;
+}
+
+.form_flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+
+  input {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--color-navy);
+  }
+}
+
+.form_actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* ---------------------------------------------------------------- 偏好行 */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-1) 0;
+}
+
+.row_label {
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.control {
+  min-width: 200px;
+}
+
+/* 展开/收起：列表尾部一条安静的文字按钮，不抢主操作 */
+.more_btn {
+  align-self: center;
+  margin-top: var(--space-2);
+  padding: 5px 14px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-accent);
+  }
+}

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import ModelDropdown from "../ModelDropdown";
 import { useChatStore } from "../../../store/Chart/index";
 import { useChartDataStore } from "../../../store/Chart/data";
-import QueryFor from "../QueryFor";
+import DriveHeader from "../../../components/DriveHeader";
 import useIsMobile from "../../../hooks/useIsMobile";
 import { useUiStore } from "../../../store/ui";
 import { IconHistory, IconPlus } from "@tabler/icons-react";
@@ -54,9 +54,11 @@ function Header() {
             <span>{t("new_conversation")}</span>
           </button>
         </div>
+        <div className={styles.m_person}>
+          <DriveHeader />
+        </div>
         <div className={styles.m_row2}>
           <ModelDropdown />
-          <QueryFor />
         </div>
         {loading_chart_session && <div className={styles.loading}></div>}
       </div>
@@ -72,6 +74,12 @@ function Header() {
           control marooned on the right with a hand-span of nothing between
           them. Sharing the column puts both at the same edges as the content
           they describe. */}
+      {/* 成员横排独占一行：和 数据/指标 页同一个控件、同一个位置，
+          切人不再依赖「帮他问」那个下拉（它和数据页的当前成员原本是两套
+          互不同步的状态，切了数据页、对话里问的还是本人）。 */}
+      <div className={styles.person_row}>
+        <DriveHeader />
+      </div>
       <div className={styles.inner}>
         <div className={styles.left}>
           <div className={styles.title_col}>
@@ -80,9 +88,6 @@ function Header() {
             </div>
             <ModelDropdown />
           </div>
-        </div>
-        <div className={styles.right}>
-          <QueryFor />
         </div>
       </div>
       {loading_chart_session && <div className={styles.loading}></div>}

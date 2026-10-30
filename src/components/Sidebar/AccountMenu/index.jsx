@@ -1,56 +1,35 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Popover } from "antd";
 import { IconCompass, IconLogout, IconSettings } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 import { useAccountStore } from "../../../store/account";
 import { clearAuthenticationData } from "../../../utils/auth.js";
 import { useTourStore } from "../../../store/tour";
-import SettingModal from "../../Modal/SettingModal.jsx";
 import styles from "./index.module.scss";
 
 const initialOf = (name, email) =>
   (name || email || "").trim().charAt(0).toUpperCase() || "?";
 
 /**
- * Who you are signed in as, plus the two things you do about it. The gear that
- * opened Settings used to be a bare icon in the far top-right corner, as far
- * from the account it belongs to as the window allows, and logout was reachable
- * only by opening that modal and scrolling to its foot.
+ * Who you are signed in as, plus the two things you do about it.
+ *
+ * 设置入口现在直接进 /settings 路由：语言、时区、模型、成员、MCP 都在那一页，
+ * 不再弹上游的模态框。两套设置界面并存过一版 —— 账号菜单弹一个、侧栏又跳一个
+ * 独立 html，里面内容还不重叠，那才是真正难用的地方。
  */
 function AccountMenu({ collapsed = false }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [showSettingModal, setShowSettingModal] = useState(false);
   const user_name = useAccountStore((state) => state.user_name);
   const user_email = useAccountStore((state) => state.user_email);
   const startTour = useTourStore((s) => s.start);
 
-  // 设置聚合：账号菜单里的「设置」直接进自建设置页（成员资料 / 模型供应商 /
-  // 应用），不再弹上游那个模态框。上游模态里的时区、安全、MCP、开发者平台
-  // 仍在，用 /data?mb-settings=1 深链打开 —— 自建页底部有入口。
   const openSettings = () => {
     setOpen(false);
-    window.location.href = "/settings.html";
+    navigate("/settings");
   };
-
-  // 深链：自建设置页的按钮带 ?mb-settings=1 / ?mb-tour=1 回来，
-  // 分别打开上游设置模态、重播新手引导 —— 这两样都在 React 状态里，
-  // 外部页面只能借深链触发。
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("mb-settings") === "1") setShowSettingModal(true);
-    if (params.get("mb-tour") === "1") startTour();
-    if (params.get("mb-settings") || params.get("mb-tour")) {
-      params.delete("mb-settings");
-      params.delete("mb-tour");
-      const qs = params.toString();
-      window.history.replaceState(
-        {},
-        "",
-        window.location.pathname + (qs ? `?${qs}` : ""),
-      );
-    }
-  }, [startTour]);
 
   // The walkthrough plays once and can be skipped, so without this entry
   // anyone who dismissed it could never get it back. Close the popover first —
@@ -122,10 +101,6 @@ function AccountMenu({ collapsed = false }) {
           )}
         </button>
       </Popover>
-      <SettingModal
-        isOpen={showSettingModal}
-        onClose={() => setShowSettingModal(false)}
-      />
     </div>
   );
 }

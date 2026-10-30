@@ -5,6 +5,7 @@ import {
   IconChevronRight,
   IconDatabase,
   IconMessageCircle,
+  IconSettings,
   IconUser,
   IconUsers,
 } from "@tabler/icons-react";
@@ -28,6 +29,7 @@ const NAV_ICONS = {
   drive: IconDatabase,
   chat: IconMessageCircle,
   people: IconUsers,
+  settings: IconSettings,
 };
 
 function SidebarBody({ collapsed = false }) {
@@ -96,9 +98,9 @@ function SidebarBody({ collapsed = false }) {
         if (items.length === 0) return null;
         return (
           <div key={section.key} className={styles.section}>
-            {/* The group label has no room on the rail; the rule between the
-                groups survives (see the scss) so the split is still legible. */}
-            {!collapsed && (
+            {/* 单组平铺后没有分组标题（section.i18nKey 缺省即不渲染）。
+                保留这段是为了别的部署想分组时还能用。 */}
+            {!collapsed && section.i18nKey && (
               <div className={styles.section_label}>{t(section.i18nKey)}</div>
             )}
             {items.map((item) => {

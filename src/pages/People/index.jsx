@@ -26,6 +26,7 @@ import { useDriveStore } from "../../store/Drive";
 import { BLOOD_TYPE_OPTIONS, GENDER_OPTIONS } from "../../enum/form";
 import pStyles from "../Profile/index.module.scss";
 import cStyles from "../CareCircle/index.module.scss";
+import sStyles from "./index.module.scss";
 
 // 服务端存生日、年龄由它推算，所以这里只问生日。1900 → 今天的范围能覆盖
 // 所有真实出生年份，也挡住未来日期。
@@ -270,6 +271,7 @@ const PeoplePage = () => {
                 <span className={cStyles.section_title}>{t("cc_section_me")}</span>
                 {saving && <span className={pStyles.saving}>{t("profile_saving")}</span>}
               </div>
+              <div className={sStyles.me_card}>
               <div className={pStyles.identity}>
                 <span className={pStyles.avatar}>{initial}</span>
                 <div className={pStyles.identity_text}>
@@ -334,6 +336,7 @@ const PeoplePage = () => {
                     onChange={(v) => save({ blood: v })}
                   />
                 </div>
+              </div>
               </div>
               <p className={pStyles.note}>{t("profile_basics_note")}</p>
             </section>

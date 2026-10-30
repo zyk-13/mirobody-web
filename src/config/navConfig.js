@@ -1,8 +1,9 @@
 /**
- * The sidebar's map of the product, in two groups.
+ * The sidebar's map of the product — one flat list.
  *
- * `工作区` is where you do the work; `管理` is the records behind it — the same
- * split the Theta surfaces use, so someone who knows one knows the other.
+ * 私有部署改：上游把入口分成「工作区 / 管理」两组，实际只有五个入口，分组
+ * 标签占去两行高度却只隔开一个「人员档案」和「设置」，读起来更像层级噪音。
+ * 现在平铺，顺序按使用频率：先做事（数据 → 指标 → 对话），再管人，最后设置。
  *
  * Plain data (no JSX) because the route matching reads it too; the icons are
  * mapped by `key` in components/Sidebar.
@@ -21,7 +22,7 @@ const NAV_CONFIG = [
   // where you land.
   {
     key: "drive",
-    section: "workspace",
+    section: "main",
     path: "/data",
     matchPaths: ["/data", "/drive"],
     i18nKey: "drive",
@@ -32,7 +33,7 @@ const NAV_CONFIG = [
   // plumbing.
   {
     key: "indicators",
-    section: "workspace",
+    section: "main",
     path: "/indicators",
     matchPaths: ["/", "/indicators"],
     i18nKey: "indicators_tab",
@@ -40,7 +41,7 @@ const NAV_CONFIG = [
   },
   {
     key: "chat",
-    section: "workspace",
+    section: "main",
     path: "/ask",
     matchPaths: ["/ask", "/chat"],
     i18nKey: "chat",
@@ -51,20 +52,27 @@ const NAV_CONFIG = [
   // /care-circle 保留为跳转。
   {
     key: "people",
-    section: "management",
+    section: "main",
     path: "/people",
     matchPaths: ["/people", "/profile", "/care-circle"],
     i18nKey: "people",
     tour: "sidebar-profile",
+  },
+  // 设置是入口不是工作：所有配置（语言、时区、安全、模型、成员、MCP）
+  // 都收在 /settings 一页，侧栏只留这一个门。
+  {
+    key: "settings",
+    section: "main",
+    path: "/settings",
+    matchPaths: ["/settings"],
+    i18nKey: "settings",
   },
   // Note: the developer / API platform (cdm) deliberately is NOT a nav item —
   // it lives in the Settings modal as a highlighted card so it doesn't compete
   // with the core nav. The /developer route still forwards to cdm.
 ];
 
-export const NAV_SECTIONS = [
-  { key: "workspace", i18nKey: "sidebar_workspace" },
-  { key: "management", i18nKey: "sidebar_management" },
-];
+// 单组：`i18nKey` 缺省表示不渲染分组标题（平铺，无小标题行）。
+export const NAV_SECTIONS = [{ key: "main" }];
 
 export default NAV_CONFIG;

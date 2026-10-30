@@ -17,6 +17,9 @@ const Share = lazy(() => import("../pages/Share/index.jsx"));
 // 档案 + 关爱圈已合并为「人员档案」一页；两个旧页组件保留但不再单独挂路由
 // （/profile、/care-circle 跳到这里），旧书签不至于 404。
 const People = lazy(() => import("../pages/People/index.jsx"));
+// 设置：语言 / 时区 / 模型 / 成员 / MCP 全部收在一页（取代上游那个设置弹窗
+// 和自建 settings.html 两套界面并存的局面）。
+const Settings = lazy(() => import("../pages/Settings/index.jsx"));
 const Activate = lazy(() => import("../pages/Activate/index.jsx"));
 const Setup = lazy(() => import("../pages/Setup/index.jsx"));
 const Indicators = lazy(() => import("../pages/Indicators/index.jsx"));
@@ -99,6 +102,10 @@ export const routes = [
           {
             path: "/care-circle",
             Component: LegacyPeopleRedirect,
+          },
+          {
+            path: "/settings",
+            Component: Settings,
           },
           // Legacy paths → the renamed ones.
           {
