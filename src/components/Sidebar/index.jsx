@@ -14,11 +14,11 @@ import { useTranslation } from "react-i18next";
 import LogoSVG from "../../assets/logo.svg?react";
 import LogoMarkSVG from "../../assets/mirobody-icon.svg?react";
 import NAV_CONFIG, { NAV_SECTIONS } from "../../config/navConfig.js";
+import { preloadRoute } from "../../router/preload.js";
 import { useSystemStore } from "../../store/system";
 import { useUiStore } from "../../store/ui";
 import useIsMobile from "../../hooks/useIsMobile";
 import HamburgerButton from "../HamburgerButton";
-import AccountMenu from "./AccountMenu";
 import RecentChats from "./RecentChats";
 import styles from "./index.module.scss";
 
@@ -117,6 +117,8 @@ function SidebarBody({ collapsed = false }) {
                   aria-current={active ? "page" : undefined}
                   aria-label={collapsed ? label : undefined}
                   data-tour={item.tour}
+                  onMouseEnter={() => preloadRoute(item.path)}
+                  onFocus={() => preloadRoute(item.path)}
                   onClick={() => goNav(item)}
                 >
                   {Icon && <Icon className={styles.nav_icon} size={16} stroke={1.6} />}
@@ -147,8 +149,6 @@ function SidebarBody({ collapsed = false }) {
           <RecentChats />
         </div>
       )}
-
-      <AccountMenu collapsed={collapsed} />
     </aside>
   );
 }

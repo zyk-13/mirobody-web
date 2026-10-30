@@ -408,7 +408,22 @@ export default function Settings() {
                 />
               )}
 
-              {!modelsLoaded && <div className={styles.hint}>{t("settings_loading")}</div>}
+              {!modelsLoaded && (
+                // 骨架与真实行同高：列表从"一行提示"长成 5 行模型，会把下面
+                // 「界面」「个人 MCP」整块推下去（CLS 实测 0.075）。
+                <div className={styles.model_list} aria-hidden="true">
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <div key={i} className={styles.model_item}>
+                      <div className={styles.model_row}>
+                        <div className={styles.model_main}>
+                          <div className={styles.skeleton_line} />
+                          <div className={`${styles.skeleton_line} ${styles.skeleton_short}`} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
               {modelsLoaded && models.length === 0 && !modelError && (
                 <div className={styles.hint}>{t("settings_models_empty")}</div>
               )}

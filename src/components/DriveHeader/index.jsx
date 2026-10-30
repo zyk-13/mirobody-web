@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useDriveStore } from "../../store/Drive";
 import { useAccountStore } from "../../store/account";
+import { sortMembersByOrder } from "../../utils/member";
 import styles from "./index.module.scss";
 
 const initialOf = (user) =>
@@ -31,14 +32,28 @@ const DriveHeader = () => {
   const current_drive_user_id = useDriveStore((s) => s.current_drive_user_id);
   const setCurrentDriveUserId = useDriveStore((s) => s.setCurrentDriveUserId);
   const beneficiary_users = useAccountStore((s) => s.beneficiary_users);
+  const member_order = useAccountStore((s) => s.member_order);
+  const fetchMemberOrder = useAccountStore((s) => s.fetchMemberOrder);
+
+  // 顺序由「人员档案」页维护，这里跟着同一份数据走；首次进来先取一次。
+  useEffect(() => {
+    if (member_order.length === 0) fetchMemberOrder();
+  }, [member_order.length, fetchMemberOrder]);
 
   // can_view === false 的成员本来就不给看数据，列出来只会点了没反应
   const members = useMemo(
-    () => (beneficiary_users || []).filter((u) => u.can_view !== false),
-    [beneficiary_users],
+    () =>
+      sortMembersByOrder(
+        (beneficiary_users || []).filter((u) => u.can_view !== false),
+        member_order,
+      ),
+    [beneficiary_users, member_order],
   );
 
-  if (members.length === 0) return null;
+  // 成员还没拉回来时留一条同高的空位，别让下面的正文先顶上来、再被这排
+  // chips 推下去 —— 那正是「点侧栏跳转时画面抖一下」的来源（CLS 实测 0.066）。
+  // 一行的 42px 足以覆盖常见家庭规模；多行只是比实际略矮，不会有反跳。
+  if (members.length === 0) return <div className={styles.placeholder} aria-hidden="true" />;
 
   // current_drive_user_id 为 null 时上游语义是「本人」，此时高亮 is_current_user
   const activeId =

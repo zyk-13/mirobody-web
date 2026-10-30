@@ -463,3 +463,32 @@
     color: var(--color-accent);
   }
 }
+
+/* 模型列表加载骨架：尺寸与真实行接近，避免列表出现时把下面几节推下去 */
+.skeleton_line {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--color-border-soft) 25%,
+    var(--color-surface) 37%,
+    var(--color-border-soft) 63%
+  );
+  background-size: 400% 100%;
+  animation: skeleton_shimmer 1.4s ease infinite;
+}
+
+.skeleton_short {
+  width: 40%;
+  margin-top: 6px;
+  height: 12px;
+}
+
+@keyframes skeleton_shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}

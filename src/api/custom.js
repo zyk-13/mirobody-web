@@ -1,0 +1,28 @@
+import { mcpRequestInstance } from "../service/request";
+
+/**
+ * 私有部署扩展接口（/api/custom/*，后端见 patches/server/routers/custom_router.py）。
+ *
+ * 成员资料：上游只能改「自己」，家人的姓名/性别/生日/血型完全改不了 ——
+ * 而这些东西直接决定 AI 怎么解释指标。排序也是同一类补丁：上游没有顺序概念。
+ */
+
+export const listCustomMembers = (signal) => {
+  return mcpRequestInstance.get("/api/custom/members", { signal });
+};
+
+/** 改任意一个成员的资料。name / gender / birth / blood 只传要改的字段。 */
+export const updateCustomMember = (member_id, patch) => {
+  return mcpRequestInstance.put(
+    `/api/custom/members/${encodeURIComponent(member_id)}`,
+    patch,
+  );
+};
+
+export const getMemberOrder = (signal) => {
+  return mcpRequestInstance.get("/api/custom/members/order", { signal });
+};
+
+export const saveMemberOrder = (ids) => {
+  return mcpRequestInstance.put("/api/custom/members/order", { ids });
+};

@@ -2,7 +2,9 @@
   width: 100%;
   flex: 1;
   min-height: 0; // Fix Safari flexbox scroll issue
-  scroll-behavior: smooth;
+  /* 不要 scroll-behavior: smooth：它会把「打开对话就落到最新一段」这件事
+     变成一个从第一段滑到最底的过场动画（用户看到的就是"点开对话先跳顶部
+     再慢慢滚下来"）。需要动画的那一处由代码里显式 behavior:"smooth" 指定。 */
   overflow-y: auto;
   display: flex;
   flex-direction: column;

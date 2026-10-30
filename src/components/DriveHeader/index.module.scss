@@ -9,6 +9,12 @@
   margin-bottom: var(--space-5);
 }
 
+/* 成员尚未就绪时占位：与一条 chip 等高（含 margin-bottom），正文不上下跳 */
+.placeholder {
+  min-height: 42px;
+  margin-bottom: var(--space-5);
+}
+
 .chip {
   display: inline-flex;
   align-items: center;

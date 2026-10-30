@@ -11,172 +11,106 @@ import api from "../../../api";
 import { message } from "antd";
 import consola from "consola";
 
-function MemberForm({ onClose }) {
+/**
+ * 新增 / 编辑一位家庭成员。
+ *
+ * 姓名是一个字段，不拆姓与名：中文姓名没有「名 + 姓」这种拼法，上游把
+ * firstName / lastName 用空格拼起来，填「玉坤 赵」得到「玉坤 赵」—— 顺序错、
+ * 还多出一个空格。服务端存的本来就是完整 name，这里照原样一个输入框。
+ *
+ * 传 `member` 就是编辑：字段预填，提交走 /api/custom/members/{id}（上游只能改
+ * 「自己」，家人资料由私有补丁接口改）。不传就是新增。
+ */
+function MemberForm({ onClose, member = null }) {
   const { t } = useTranslation();
   const fetchBeneficiaryUsers = useAccountStore(
     (state) => state.fetchBeneficiaryUsers,
   );
+  const isEdit = Boolean(member?.id);
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    relationship: "",
-    dateOfBirth: "",
-    gender: "",
-    blood: "",
+    name: member?.name || member?.nickname || "",
+    dateOfBirth: member?.birth ? dayjs(member.birth).format("MM/DD/YYYY") : "",
+    gender: member?.gender || "",
+    blood: member?.blood || "",
   });
 
-  const [errors, setErrors] = useState({
-    firstName: false,
-    lastName: false,
-    relationship: false,
-  });
-
+  const [errors, setErrors] = useState({ name: false });
   const [loading, setLoading] = useState(false);
 
-  // Generic handler for form field changes
   const handleFieldChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({
-        ...prev,
-        [field]: false,
-      }));
-    }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: false }));
   };
 
-  // Validate required fields
   const validateForm = () => {
-    const newErrors = {
-      firstName: !formData.firstName.trim(),
-      lastName: !formData.lastName.trim(),
-      relationship: !formData.relationship.trim(),
-    };
-
+    const newErrors = { name: !formData.name.trim() };
     setErrors(newErrors);
-
-    // Return true if no errors
-    return !Object.values(newErrors).some((error) => error);
+    return !Object.values(newErrors).some(Boolean);
   };
 
-  const onChangeFirstName = (e) => {
-    handleFieldChange("firstName", e.target.value);
+  const onChangeName = (e) => {
+    if (e.target.value.length > 64) return;
+    handleFieldChange("name", e.target.value);
   };
-
-  const onChangeLastName = (e) => {
-    handleFieldChange("lastName", e.target.value);
-  };
-
-  const onChangeRelationship = (e) => {
-    if (e.target.value.length > 20) {
-      return;
-    }
-    handleFieldChange("relationship", e.target.value);
-  };
-
   const onChangeDateOfBirth = (value) => {
     handleFieldChange("dateOfBirth", dayjs(value).format("MM/DD/YYYY"));
   };
+  const onChangeGender = (option) => handleFieldChange("gender", option.value);
+  const onChangeBlood = (option) => handleFieldChange("blood", option.value);
 
-  const onChangeGender = (option) => {
-    handleFieldChange("gender", option.value);
-  };
-
-  // Translate gender options dynamically
   const translatedGenderOptions = GENDER_OPTIONS.map((option) => ({
     ...option,
     label: t(option.label),
   }));
-  const onChangeblood = (option) => {
-    handleFieldChange("blood", option.value);
-  };
-  // cancel
+
   const onClickCancel = () => {
-    clearForm();
     onClose();
   };
-  // submit
+
   const onClickSubmit = async () => {
+    if (loading) return;
+    if (!validateForm()) return;
+    setLoading(true);
     try {
-      if (loading) return;
-      setLoading(true);
-      if (validateForm()) {
-        const name = `${formData.firstName} ${formData.lastName}`.trim();
-        const birth = formData.dateOfBirth
-          ? dayjs(formData.dateOfBirth, "MM/DD/YYYY").format("YYYY-MM-DD")
-          : "";
-        await api.createVirtualUser({
-          name,
-          gender: formData.gender || "other", // backend maps the string
-          birth,
-          blood: formData.blood || "",
-        });
+      const name = formData.name.trim();
+      const birth = formData.dateOfBirth
+        ? dayjs(formData.dateOfBirth, "MM/DD/YYYY").format("YYYY-MM-DD")
+        : "";
+      const gender = formData.gender || "other"; // 后端负责映射成字符串
+      const blood = formData.blood || "";
+
+      if (isEdit) {
+        await api.updateCustomMember(member.id, { name, gender, birth, blood });
+        message.success(t("member_saved"));
+      } else {
+        await api.createVirtualUser({ name, gender, birth, blood });
         message.success(t("add_member_success", "Member added"));
-        clearForm();
-        onClose();
-        fetchBeneficiaryUsers();
       }
+      onClose();
+      fetchBeneficiaryUsers();
     } catch (error) {
-      consola.error("ERROR:: onClickSubmit", error);
-      message.error(t("add_member_failed", "Failed to add member"));
+      consola.error("ERROR: MemberForm submit", error);
+      message.error(isEdit ? t("member_save_failed") : t("add_member_failed", "Failed to add member"));
     } finally {
       setLoading(false);
     }
   };
 
-  // Clear form - reset to initial state
-  const clearForm = () => {
-    setFormData({
-      firstName: "",
-      lastName: "",
-      relationship: "",
-      dateOfBirth: "",
-      gender: "",
-      blood: "",
-    });
-    setErrors({
-      firstName: false,
-      lastName: false,
-      relationship: false,
-    });
-  };
-
   return (
     <div className={styles.member_form} onClick={(e) => e.stopPropagation()}>
       <div className={styles.header}>
-        <div className={styles.title}>{t("add_member")}</div>
-        <div className={styles.desc}>{t("add_member_desc")}</div>
+        <div className={styles.title}>
+          {isEdit ? t("edit_member") : t("add_member")}
+        </div>
+        {!isEdit && <div className={styles.desc}>{t("add_member_desc")}</div>}
       </div>
       <div className={styles.content}>
         <FormItemInput
-          label={t("first_name")}
+          label={t("full_name")}
           required
-          onChange={onChangeFirstName}
-          value={formData.firstName}
-          error={errors.firstName}
-          errorMessage={t("form_error_required")}
-        />
-        <FormItemInput
-          label={t("last_name")}
-          required
-          onChange={onChangeLastName}
-          value={formData.lastName}
-          error={errors.lastName}
-          errorMessage={t("form_error_required")}
-        />
-        <FormItemInput
-          label={t("relationship")}
-          required
-          placeholder={t("relationship_placeholder")}
-          onChange={onChangeRelationship}
-          value={formData.relationship}
-          showCounter
-          maxLength={20}
-          error={errors.relationship}
+          onChange={onChangeName}
+          value={formData.name}
+          error={errors.name}
           errorMessage={t("form_error_required")}
         />
         <FormItemDate
@@ -192,7 +126,7 @@ function MemberForm({ onClose }) {
         />
         <FormItemSelect
           label={t("blood_type")}
-          onChange={onChangeblood}
+          onChange={onChangeBlood}
           value={formData.blood}
           options={BLOOD_TYPE_OPTIONS}
         />
@@ -202,7 +136,7 @@ function MemberForm({ onClose }) {
           {t("cancel_btn")}
         </div>
         <div className={styles.btn_submit} onClick={onClickSubmit}>
-          {t("submit_btn")}
+          {loading ? t("settings_saving") : t("submit_btn")}
         </div>
       </div>
     </div>

@@ -12,7 +12,14 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DatePicker, Select, message } from "antd";
-import { IconKey, IconTrash, IconUserPlus } from "@tabler/icons-react";
+import {
+  IconArrowDown,
+  IconArrowUp,
+  IconKey,
+  IconPencil,
+  IconTrash,
+  IconUserPlus,
+} from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import consola from "consola";
@@ -24,6 +31,7 @@ import InviteSignIn from "../CareCircle/InviteSignIn";
 import { useAccountStore } from "../../store/account";
 import { useDriveStore } from "../../store/Drive";
 import { BLOOD_TYPE_OPTIONS, GENDER_OPTIONS } from "../../enum/form";
+import { sortMembersByOrder } from "../../utils/member";
 import pStyles from "../Profile/index.module.scss";
 import cStyles from "../CareCircle/index.module.scss";
 import sStyles from "./index.module.scss";
@@ -58,12 +66,20 @@ const PeoplePage = () => {
   const user_email = useAccountStore((s) => s.user_email);
   const beneficiary_users = useAccountStore((s) => s.beneficiary_users);
   const fetchBeneficiaryUsers = useAccountStore((s) => s.fetchBeneficiaryUsers);
+  const member_order = useAccountStore((s) => s.member_order);
+  const setMemberOrder = useAccountStore((s) => s.setMemberOrder);
+  const fetchMemberOrder = useAccountStore((s) => s.fetchMemberOrder);
   const current_drive_user_id = useDriveStore((s) => s.current_drive_user_id);
   const setCurrentDriveUserId = useDriveStore((s) => s.setCurrentDriveUserId);
 
   const [showAddMember, setShowAddMember] = useState(false);
   const [inviting, setInviting] = useState(null);
   const [sharing, setSharing] = useState([]);
+  // 编辑用：/api/custom/members 带原始 birth / blood（对外的名册只给 age 与
+  // blood_type），且标了 can_write —— 能不能改以它为准。
+  const [editable, setEditable] = useState([]);
+  const [editingMember, setEditingMember] = useState(null);
+  const [ordering, setOrdering] = useState(false);
 
   // ── 本人基本信息 ───────────────────────────────────────────────────────
   const [loading, setLoading] = useState(true);
@@ -92,6 +108,11 @@ const PeoplePage = () => {
   useEffect(() => {
     load();
     fetchBeneficiaryUsers();
+    fetchMemberOrder();
+    api
+      .listCustomMembers()
+      .then((res) => setEditable(res?.members || []))
+      .catch((err) => consola.warn("People: listCustomMembers failed", err?.message));
     const controller = new AbortController();
     api
       .listSharedWithMe(controller.signal)
@@ -100,7 +121,18 @@ const PeoplePage = () => {
         if (err?.name !== "CanceledError") consola.error("ERROR: listSharedWithMe", err);
       });
     return () => controller.abort();
-  }, [load, fetchBeneficiaryUsers]);
+  }, [load, fetchBeneficiaryUsers, fetchMemberOrder]);
+
+  // 编辑完/加完人之后，名册与可编辑清单都要重取：一边管显示，一边管表单预填
+  const refreshRoster = useCallback(async () => {
+    await fetchBeneficiaryUsers();
+    try {
+      const res = await api.listCustomMembers();
+      setEditable(res?.members || []);
+    } catch (err) {
+      consola.warn("People: refresh editable members failed", err?.message);
+    }
+  }, [fetchBeneficiaryUsers]);
 
   const save = async (patch) => {
     const next = { ...form, ...patch };
@@ -130,10 +162,48 @@ const PeoplePage = () => {
     () => beneficiary_users.find((u) => u.is_current_user),
     [beneficiary_users],
   );
+  // 顺序：本人永远第一，其余按用户自定义顺序（/api/custom/members/order）
   const others = useMemo(
-    () => beneficiary_users.filter((u) => !u.is_current_user),
-    [beneficiary_users],
+    () =>
+      sortMembersByOrder(
+        beneficiary_users.filter((u) => !u.is_current_user),
+        member_order,
+      ),
+    [beneficiary_users, member_order],
   );
+
+  // 上移/下移：只重排家庭成员，整份顺序（含本人）写回服务端
+  const moveMember = async (user, delta) => {
+    const ids = others.map((u) => String(u.id));
+    const i = ids.indexOf(String(user.id));
+    const j = i + delta;
+    if (i < 0 || j < 0 || j >= ids.length || ordering) return;
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    const full = me ? [String(me.id), ...ids] : ids;
+    setOrdering(true);
+    setMemberOrder(full); // 先改本地：点完立刻看到位置变了
+    try {
+      await api.saveMemberOrder(full);
+    } catch (err) {
+      consola.error("ERROR: saveMemberOrder", err);
+      message.error(t("member_save_failed"));
+      fetchMemberOrder(); // 存不上就退回服务端的顺序
+    } finally {
+      setOrdering(false);
+    }
+  };
+
+  // 编辑：优先用 /api/custom/members 的原始 birth / blood 预填
+  const openEdit = (user) => {
+    const row = editable.find((m) => String(m.id) === String(user.id));
+    setEditingMember({
+      id: String(user.id),
+      name: row?.name || user.name || user.nickname || "",
+      gender: row?.gender || user.gender || "",
+      birth: row?.birth || "",
+      blood: row?.blood || "",
+    });
+  };
 
   const onChangeAccess = async (circle, access) => {
     try {
@@ -176,7 +246,7 @@ const PeoplePage = () => {
     });
   };
 
-  const renderCard = (user) => {
+  const renderCard = (user, index) => {
     const rawEmail = user.is_current_user ? user.email || user_email : user.email;
     const email = isSyntheticEmail(rawEmail) ? "" : rawEmail;
     const facts = [
@@ -200,16 +270,48 @@ const PeoplePage = () => {
             </div>
             {email && <div className={cStyles.email}>{email}</div>}
           </div>
-          {user.is_managed && (
+          <div className={sStyles.card_actions}>
             <button
               type="button"
-              className={cStyles.remove}
-              aria-label={t("remove_member_confirm_title")}
-              onClick={() => onRemoveMember(user)}
+              className={sStyles.card_btn}
+              aria-label={t("edit_member")}
+              title={t("edit_member")}
+              onClick={() => openEdit(user)}
             >
-              <IconTrash size={15} />
+              <IconPencil size={14} stroke={1.8} />
             </button>
-          )}
+            <button
+              type="button"
+              className={sStyles.card_btn}
+              aria-label={t("move_up")}
+              title={t("move_up")}
+              disabled={ordering || index === 0}
+              onClick={() => moveMember(user, -1)}
+            >
+              <IconArrowUp size={14} stroke={1.8} />
+            </button>
+            <button
+              type="button"
+              className={sStyles.card_btn}
+              aria-label={t("move_down")}
+              title={t("move_down")}
+              disabled={ordering || index === others.length - 1}
+              onClick={() => moveMember(user, 1)}
+            >
+              <IconArrowDown size={14} stroke={1.8} />
+            </button>
+            {user.is_managed && (
+              <button
+                type="button"
+                className={`${sStyles.card_btn} ${sStyles.card_btn_danger}`}
+                aria-label={t("remove_member_confirm_title")}
+                title={t("remove_member_confirm_title")}
+                onClick={() => onRemoveMember(user)}
+              >
+                <IconTrash size={14} />
+              </button>
+            )}
+          </div>
         </div>
         {user.can_view === false ? (
           <div className={cStyles.facts_empty}>{t("cc_not_sharing")}</div>
@@ -288,6 +390,7 @@ const PeoplePage = () => {
                   <Select
                     id="people-gender"
                     className={sStyles.me_control}
+                    size="small"
                     options={genderOptions}
                     value={form?.gender}
                     loading={loading}
@@ -303,6 +406,7 @@ const PeoplePage = () => {
                   <DatePicker
                     id="people-birth"
                     className={sStyles.me_control}
+                    size="small"
                     value={form?.birth || null}
                     disabled={loading}
                     placeholder={t("profile_not_set")}
@@ -318,6 +422,7 @@ const PeoplePage = () => {
                   <Select
                     id="people-blood"
                     className={sStyles.me_control}
+                    size="small"
                     options={bloodOptions}
                     value={form?.blood}
                     loading={loading}
@@ -348,7 +453,7 @@ const PeoplePage = () => {
                 <span className={cStyles.section_count}>{others.length}</span>
               </div>
               {others.length > 0 ? (
-                <div className={cStyles.grid}>{others.map(renderCard)}</div>
+                <div className={cStyles.grid}>{others.map((u, i) => renderCard(u, i))}</div>
               ) : (
                 <div className={cStyles.empty}>
                   <div className={cStyles.empty_title}>{t("cc_empty_title")}</div>
@@ -398,8 +503,31 @@ const PeoplePage = () => {
         </div>
       </div>
 
-      <Modal isOpen={showAddMember} onClose={() => setShowAddMember(false)}>
+      <Modal
+        isOpen={showAddMember}
+        onClose={() => {
+          setShowAddMember(false);
+          refreshRoster();
+        }}
+      >
         <MemberForm onClose={() => setShowAddMember(false)} />
+      </Modal>
+      <Modal
+        isOpen={Boolean(editingMember)}
+        onClose={() => {
+          setEditingMember(null);
+          refreshRoster();
+        }}
+      >
+        {editingMember && (
+          <MemberForm
+            member={editingMember}
+            onClose={() => {
+              setEditingMember(null);
+              refreshRoster();
+            }}
+          />
+        )}
       </Modal>
       <Modal isOpen={Boolean(inviting)} onClose={() => setInviting(null)}>
         {inviting && <InviteSignIn member={inviting} onClose={() => setInviting(null)} />}

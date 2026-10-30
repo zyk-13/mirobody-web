@@ -55,7 +55,8 @@ const NAV_CONFIG = [
     section: "main",
     path: "/people",
     matchPaths: ["/people", "/profile", "/care-circle"],
-    i18nKey: "people",
+    // 侧栏标签用短词「档案」：导航是地图，页面标题才需要说清「人员」二字
+    i18nKey: "nav_people",
     tour: "sidebar-profile",
   },
   // 设置是入口不是工作：所有配置（语言、时区、安全、模型、成员、MCP）

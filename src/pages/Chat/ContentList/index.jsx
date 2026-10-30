@@ -80,9 +80,24 @@ function ContentList() {
     // Use setTimeout to ensure DOM is fully rendered after async data load
     setTimeout(() => {
       if (!contentListRef.current) return;
+      const el = contentListRef.current;
 
-      const userMessages =
-        contentListRef.current.querySelectorAll('[data-role="user"]');
+      // 打开/切换对话：直接落到最新一段，不做滚动动画。
+      // 原来用 scrollIntoView({behavior:"smooth"})，页面先按顶部渲染、再当着
+      // 用户的面从第一段滑到最底 —— 长对话像被"拉着走"一遍，正是反馈里
+      // 说的「从对话顶部滚动到底部」。同步赋值 scrollTop 没有过渡帧。
+      if (isSessionChange) {
+        el.scrollTop = el.scrollHeight;
+        // 图片、代码块等异步撑高的内容落地后再贴一次底（不带动画）
+        requestAnimationFrame(() => {
+          if (contentListRef.current) {
+            contentListRef.current.scrollTop = contentListRef.current.scrollHeight;
+          }
+        });
+        return;
+      }
+
+      const userMessages = el.querySelectorAll('[data-role="user"]');
       if (userMessages.length > 0) {
         const lastUserMessage = userMessages[userMessages.length - 1];
         lastUserMessage.scrollIntoView({

@@ -61,6 +61,25 @@ export const useAccountStore = create((set, get) => ({
       beneficiary_users: users,
     });
   },
+  /* 成员展示顺序（私有补丁接口，见 api/custom.js）。
+     上游没有"顺序"这个概念，谁是第一个由接口决定；这里让用户自己摆，
+     人员档案页可上移/下移，驱动页顶部的成员 chips 也跟着同一个顺序。 */
+  member_order: [],
+  setMemberOrder: (ids) => set({ member_order: Array.isArray(ids) ? ids : [] }),
+  fetchMemberOrder: async () => {
+    try {
+      const res = await api.getMemberOrder();
+      const ids = (res?.ids || []).map(String);
+      set({ member_order: ids });
+      return ids;
+    } catch (error) {
+      // 读不到顺序不影响使用：按接口原顺序显示就是了
+      if (error?.name !== "CanceledError" && error?.name !== "AbortError") {
+        consola.warn("account::fetchMemberOrder failed", error?.message);
+      }
+      return [];
+    }
+  },
   /* fetch beneficiary users */
   fetchBeneficiaryUsers: async () => {
     const { _beneficiaryUsersController } = get();

@@ -3,8 +3,10 @@ import { useChatStore } from "../../../../store/Chart";
 import { useChatHistoryStore } from "../../../../store/Chart/history";
 import { useChartDataStore } from "../../../../store/Chart/data";
 import { useUiStore } from "../../../../store/ui";
+import { useAccountStore } from "../../../../store/account";
+import { useDriveStore } from "../../../../store/Drive";
 import { useTranslation } from "react-i18next";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router";
 import { Dropdown, message } from "antd";
 import Modal from "../../../Modal";
@@ -29,6 +31,21 @@ const HistoryList = () => {
   );
   const history_loaded = useChatHistoryStore((state) => state.history_loaded);
   const history_error = useChatHistoryStore((state) => state.history_error);
+  // 顶部选人栏切了谁，列表就只显示谁的对话：会话表里 query_user_id 就是
+  // 「这段对话在问谁」，以前不分人全平铺，本人的、孩子的混在一起分不清。
+  const current_drive_user_id = useDriveStore((s) => s.current_drive_user_id);
+  const account_user_id = useAccountStore((s) => s.user_id);
+  const current_query_user_id = useAccountStore((s) => s.current_query_user_id);
+  const person_id =
+    current_drive_user_id || current_query_user_id || account_user_id || "";
+  const visible_list = useMemo(() => {
+    const selfId = String(account_user_id || "");
+    return conversation_list.filter((item) => {
+      // 老会话没有归属（query_user_id 为空）：按本人处理，总比整体消失好
+      const owner = item.query_user_id ? String(item.query_user_id) : selfId;
+      return owner === String(person_id);
+    });
+  }, [conversation_list, person_id, account_user_id]);
   /*  */
   const current_session_id = useChatStore((state) => state.current_session_id);
   const fetchHistoryByConversationList = useChatHistoryStore(
@@ -149,7 +166,7 @@ const HistoryList = () => {
 
           // Check if deleted session is the current active session
           if (current_session_id === sessionId) {
-            const remainingSessions = conversation_list.filter(
+            const remainingSessions = visible_list.filter(
               (item) => item.session_id !== sessionId,
             );
             if (remainingSessions.length > 0) {
@@ -218,14 +235,14 @@ const HistoryList = () => {
     );
   }
 
-  if (conversation_list.length === 0) {
+  if (visible_list.length === 0) {
     return <div className={styles.state}>{t("history_empty")}</div>;
   }
 
   return (
     <>
       <div className={styles.list} key="expand_list_key" ref={listRef}>
-        {conversation_list.map((item) => {
+        {visible_list.map((item) => {
             const session_data = chartData[item.session_id];
             const is_streaming = session_data?.is_streaming || false;
             const show_skeleton = !item.summary && is_streaming;

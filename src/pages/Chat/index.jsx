@@ -10,6 +10,8 @@ import { useChatStore } from "../../store/Chart/index";
 import { useAccountStore } from "../../store/account";
 import { useChatHistoryStore } from "../../store/Chart/history";
 import { useChatPreviewStore } from "../../store/Chart/preview";
+import { useChartDataStore } from "../../store/Chart/data";
+import { useDriveStore } from "../../store/Drive";
 import { useModelStore } from "../../store/model";
 import { Outlet, useMatch, useNavigate } from "react-router";
 
@@ -36,6 +38,21 @@ function Chat() {
     },
     [setFullpageDatasource, switchIsShowFullpage],
   );
+
+  // 换人 → 换对话。对话按人隔离：切到赵逸欣时，还开着「本人的药单」那条记录
+  // 会让人以为在问孩子，答的却还是本人。这里把不属于当前人的会话直接收起来，
+  // 回欢迎页，下次提问自然带上新的 query_user_id。
+  const personId = useDriveStore((s) => s.current_drive_user_id);
+  const sessionOwnerId = useChartDataStore((s) =>
+    currentSessionId ? s.chartData[currentSessionId]?.query_user_id : null,
+  );
+  useEffect(() => {
+    if (!personId || !currentSessionId) return;
+    if (!sessionOwnerId) return; // 老会话没有归属，不动它
+    if (String(sessionOwnerId) === String(personId)) return;
+    useChatStore.getState().startNewChat();
+    if (!isWelcome) navigate("/ask", { replace: true });
+  }, [personId, currentSessionId, sessionOwnerId, isWelcome, navigate]);
 
   // Sync store → URL: navigate when session ID changes
   // null case is handled by Menu (startNewChat + navigate("/chat"))

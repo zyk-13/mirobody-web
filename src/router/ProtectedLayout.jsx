@@ -7,7 +7,6 @@ import { sessionManager } from "../utils/sessionManager";
 import { getApiBaseUrl } from "../utils";
 import { useSessionReauth } from "../hooks/useSessionReauth";
 import SessionReauthOverlay from "../components/SessionReauthOverlay";
-import OnboardingTour from "../components/OnboardingTour";
 
 function ProtectedLayout() {
   const token = localStorage.getItem(ACCESS_TOKEN);
@@ -37,9 +36,8 @@ function ProtectedLayout() {
     <>
       <Outlet />
       {isReauthing && <SessionReauthOverlay />}
-      {/* Mounted here, not per page: the sidebar it points at is on every
-          signed-in route, and the tour must survive navigation between them. */}
-      <OnboardingTour />
+      {/* 引导层已停用：私有部署只有五个平铺入口，路径本身已经足够自解释，
+          多一层遮罩高亮反而挡住页面。组件与 store 留在仓库里，改回渲染即可复活。 */}
     </>
   );
 }
