@@ -56,6 +56,10 @@ const IndicatorsPanel = ({
   // "60 of 244" instead of presenting a slice as the whole.
   const [truncated, setTruncated] = useState(null);
 
+  // 异常标记：上游指标接口不带参考范围，另取 /api/custom/indicator-flags
+  const [flagMap, setFlagMap] = useState({});
+  const [flagSummary, setFlagSummary] = useState(null);
+
   const [selected, setSelected] = useState(null);
   const [readings, setReadings] = useState([]);
   const [readingsLoading, setReadingsLoading] = useState(false);
@@ -72,6 +76,30 @@ const IndicatorsPanel = ({
   }, [beneficiary_users, current_drive_user_id]);
 
   const abortRef = useRef(null);
+
+  useEffect(() => {
+    let alive = true;
+    api
+      .getIndicatorFlags({ days: 730, subject_id: current_drive_user_id || "" })
+      .then((res) => {
+        if (!alive) return;
+        const map = {};
+        for (const item of res?.items || []) {
+          map[item.name] = item;
+        }
+        setFlagMap(map);
+        setFlagSummary({ abnormal: res?.abnormal || 0, total: res?.total || 0 });
+      })
+      .catch(() => {
+        if (alive) {
+          setFlagMap({});
+          setFlagSummary(null);
+        }
+      });
+    return () => {
+      alive = false;
+    };
+  }, [current_drive_user_id, refreshTrigger]);
 
   const load = useCallback(
     async (keywords) => {
@@ -295,6 +323,17 @@ const IndicatorsPanel = ({
         </div>
       ) : (
         <div className={styles.tableWrap}>
+          {flagSummary && flagSummary.total > 0 && (
+            <div
+              className={`${styles.flagSummary} ${
+                flagSummary.abnormal > 0 ? styles.flagSummary_warn : ""
+              }`}
+            >
+              {flagSummary.abnormal > 0
+                ? t("ind_abnormal_summary", { n: flagSummary.abnormal })
+                : t("ind_abnormal_none")}
+            </div>
+          )}
           <table className={styles.table}>
             {/* Explicit widths: the name column would otherwise eat half the
                 page and strand the numbers at the far right, where the eye has
@@ -333,6 +372,24 @@ const IndicatorsPanel = ({
                           {row.unit && (
                             <span className={styles.unit}>{row.unit}</span>
                           )}
+                          {flagMap[row.indicator]?.level ? (
+                            <span
+                              className={`${styles.flag} ${
+                                flagMap[row.indicator].level === "high"
+                                  ? styles.flag_high
+                                  : styles.flag_low
+                              }`}
+                              title={
+                                flagMap[row.indicator].ref
+                                  ? `${t("indicator_ref")} ${flagMap[row.indicator].ref}`
+                                  : undefined
+                              }
+                            >
+                              {flagMap[row.indicator].level === "high"
+                                ? t("ind_high")
+                                : t("ind_low")}
+                            </span>
+                          ) : null}
                         </>
                       ) : (
                         <span className={styles.muted}>—</span>

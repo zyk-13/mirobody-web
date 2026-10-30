@@ -24,6 +24,10 @@ export const useUploadStore = create(
     // indicators_count, done}. The "which date?" bar reads this; a file
     // leaves it when the user answers or when its date came off the document.
     pending_dates: {},
+    // 上一批上传里解析失败的文件（{count, names}）。上传完就静默失败是用户
+    // 反馈的问题：文件在列表里躺着，人却不知道它没进指标。
+    last_batch_failures: null,
+    dismissUploadFailures: () => set({ last_batch_failures: null }),
 
     addUploadingFile: (messageId, fileInfo, userId) => {
       set((state) => {
@@ -114,6 +118,21 @@ export const useUploadStore = create(
 
       // If all files are finished, clear the map for current user and refresh the list
       if (allFinished) {
+        // 先记下这一批里失败的文件，再清空 — 否则失败会静默消失在列表里
+        const failed = Array.from(userFiles.values()).filter(
+          (file) => file.upload_status === "failed",
+        );
+        set({
+          last_batch_failures: failed.length
+            ? {
+                count: failed.length,
+                names: failed
+                  .map((f) => f.file_name || f.name || "")
+                  .filter(Boolean)
+                  .slice(0, 5),
+              }
+            : null,
+        });
         get().clearUploadingFiles();
         get().fetchFileList();
       }

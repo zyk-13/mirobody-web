@@ -21,3 +21,49 @@
 .highlight_blink {
   animation: blink 1.5s ease-in-out;
 }
+/* 解析失败提示条：出现在文件列表上方，说明「哪几个没成功」并提供入口 */
+.fail_banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-danger-border, #f0c8c8);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-bg, #fdecec);
+}
+
+.fail_text {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--color-danger, #c0392b);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fail_action {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--color-danger-border, #f0c8c8);
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--color-danger, #c0392b);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.fail_close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--color-danger, #c0392b);
+  cursor: pointer;
+}

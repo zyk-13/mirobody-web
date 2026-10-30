@@ -332,3 +332,34 @@
     }
   }
 }
+
+/* 异常标记：偏高/偏低是一眼要看出来的，但别做成大红块 —— 一行一个药丸 */
+.flag {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 17px;
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+
+.flag_high {
+  background: var(--color-danger-bg, #fdecec);
+  color: var(--color-danger, #c0392b);
+}
+
+.flag_low {
+  background: var(--color-warning-bg, #fdf3e3);
+  color: var(--color-warning, #a06411);
+}
+
+.flagSummary {
+  padding: 6px 0 10px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.flagSummary_warn {
+  color: var(--color-danger, #c0392b);
+}

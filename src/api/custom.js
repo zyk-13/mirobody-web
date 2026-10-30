@@ -31,3 +31,19 @@ export const saveMemberOrder = (ids) => {
 export const getBackupStatus = (signal) => {
   return mcpRequestInstance.get("/api/custom/backup/status", { signal });
 };
+
+/** 最近 N 天带参考范围的读数（含高低判断），用于指标页标异常。 */
+export const getIndicatorFlags = ({ days = 730, subject_id = "", signal } = {}) => {
+  return mcpRequestInstance.get("/api/custom/indicator-flags", {
+    params: { days, subject_id },
+    signal,
+  });
+};
+
+/** 在自己所有对话里搜正文，返回命中的消息片段。 */
+export const searchChats = ({ q, limit = 30, signal }) => {
+  return mcpRequestInstance.get("/api/custom/chat/search", {
+    params: { q, limit },
+    signal,
+  });
+};

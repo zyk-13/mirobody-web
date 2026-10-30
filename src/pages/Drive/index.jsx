@@ -19,6 +19,7 @@ import Tabs from "../../components/Tabs";
 import Genomics from "./Genomics";
 import { VITAL_STATUS } from "../../enum/vital";
 import { sourcesView } from "./sources";
+import { IconX } from "@tabler/icons-react";
 import styles from "./index.module.scss";
 
 const TAB_KEYS = ["records", "upload_files", "genomics", "connect_data_source"];
@@ -56,6 +57,10 @@ const DrivePage = () => {
     (state) => state.fetchBeneficiaryUsers,
   );
   const fileTotal = useUploadStore((state) => state.total);
+  const uploadFailures = useUploadStore((state) => state.last_batch_failures);
+  const dismissUploadFailures = useUploadStore(
+    (state) => state.dismissUploadFailures,
+  );
   const providers_list = useVitalStore((state) => state.providers_list);
   const loading_providers = useVitalStore((state) => state.loading_providers);
   const providers_answered = useVitalStore((state) => state.providers_answered);
@@ -194,6 +199,32 @@ const DrivePage = () => {
           {/* One content column, so the page stops having three right edges. */}
           <div className={styles.column}>
             <DriveHeader />
+            {/* 文件解析失败以前只在表格里留一行灰字，上传完就没人知道 —— 这里明说 */}
+            {uploadFailures?.count > 0 && (
+              <div className={styles.fail_banner} role="status">
+                <span className={styles.fail_text}>
+                  {t("upload_failed_banner", { n: uploadFailures.count })}
+                  {uploadFailures.names?.length
+                    ? ` · ${uploadFailures.names.join("、")}`
+                    : ""}
+                </span>
+                <button
+                  type="button"
+                  className={styles.fail_action}
+                  onClick={() => selectTab("upload_files")}
+                >
+                  {t("upload_failed_action")}
+                </button>
+                <button
+                  type="button"
+                  className={styles.fail_close}
+                  aria-label={t("upload_failed_dismiss")}
+                  onClick={dismissUploadFailures}
+                >
+                  <IconX size={14} stroke={2} />
+                </button>
+              </div>
+            )}
             {isEmpty && (
               <EmptyGuide
                 showJournal={isShowJournal}
