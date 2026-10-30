@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import i18n from "i18next";
 import { Select } from "antd";
@@ -237,13 +237,14 @@ export default function Settings() {
       if (keyValue) {
         await authedFetch("/keys", "PUT", { var: draft.api_key.trim(), value: keyValue });
       }
-      const { api_key_value, ...rest } = draft;
       const body = {
-        ...rest,
+        ...draft,
         temperature: Number(draft.temperature) || 0.1,
         base_url: draft.base_url || null,
         model: draft.model || null,
       };
+      // 密钥值只用于上面的 /keys 写入，不进模型配置
+      delete body.api_key_value;
       if (editing) {
         // 改名要按「旧名 → 新名」提交，否则后端找不到原条目
         await authedFetch(`/models/${encodeURIComponent(editing)}`, "PUT", body);
@@ -284,9 +285,9 @@ export default function Settings() {
 
   const visibleModels = showAllModels ? models : models.slice(0, 5);
 
-  const modelRows = useMemo(
-    () =>
-      visibleModels.map((m) => (
+  // 不需要 useMemo：这里读的每一项（models / editing / draft / busy / t）都在
+  // 渲染路径上，缓存收益为零，反而要维护一份永远对不齐的依赖数组。
+  const modelRows = visibleModels.map((m) => (
         <div key={m.name} className={styles.model_item}>
           <div className={styles.model_row}>
             <div className={styles.model_main}>
@@ -343,9 +344,7 @@ export default function Settings() {
             />
           )}
         </div>
-      )),
-    [visibleModels, models, editing, draft, busy],
-  );
+      ));
 
   return (
     <div className={styles.page}>

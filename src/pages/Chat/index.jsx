@@ -1,7 +1,7 @@
 import styles from "./index.module.scss";
 import ChatHeader from "./ChatHeader";
 import Input from "./Input";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import FileViewer from "./FileViewer";
 import Sidebar, { MobileTopBar } from "../../components/Sidebar";
 import AssistantCard from "./Dialog/Assistant/AssistantCard";
@@ -43,16 +43,38 @@ function Chat() {
   // 会让人以为在问孩子，答的却还是本人。这里把不属于当前人的会话直接收起来，
   // 回欢迎页，下次提问自然带上新的 query_user_id。
   const personId = useDriveStore((s) => s.current_drive_user_id);
-  const sessionOwnerId = useChartDataStore((s) =>
-    currentSessionId ? s.chartData[currentSessionId]?.query_user_id : null,
+  // 归属有两处来源：正在跑的会话在 chartData 里，从 URL 直接打开（或刷新）的
+  // 会话在 chartData 里可能是 null —— 那条路径的 switchSession 只拿到 session_id。
+  // 历史列表是权威的兜底，用它的 query_user_id 判断这段对话属于谁。
+  const session_id_now = useChatStore((s) => s.current_session_id);
+  const ownerFromChart = useChartDataStore((s) =>
+    session_id_now ? s.chartData[session_id_now]?.query_user_id : null,
   );
+  const ownerFromHistory = useChatHistoryStore((s) =>
+    session_id_now
+      ? (s.conversation_list.find((i) => i.session_id === session_id_now) || {})
+          .query_user_id
+      : null,
+  );
+  const sessionOwnerId = ownerFromChart || ownerFromHistory || null;
+  // 两种「人和对话对不上」，处理相反：
+  //   · 用户手动换了人   → 收起不属于新的人的会话，回欢迎页；
+  //   · 打开/刷新进的是别人的会话（列表点击、旧链接）→ 人物栏跟着切到那个
+  //     会话的主人，而不是把人正在看的对话关掉。
+  const prevPersonRef = useRef(personId);
   useEffect(() => {
-    if (!personId || !currentSessionId) return;
-    if (!sessionOwnerId) return; // 老会话没有归属，不动它
+    const personChanged = prevPersonRef.current !== personId;
+    prevPersonRef.current = personId;
+    if (!personId || !session_id_now || !sessionOwnerId) return;
     if (String(sessionOwnerId) === String(personId)) return;
-    useChatStore.getState().startNewChat();
-    if (!isWelcome) navigate("/ask", { replace: true });
-  }, [personId, currentSessionId, sessionOwnerId, isWelcome, navigate]);
+
+    if (personChanged) {
+      useChatStore.getState().startNewChat();
+      if (!isWelcome) navigate("/ask", { replace: true });
+    } else {
+      useDriveStore.getState().setCurrentDriveUserId(sessionOwnerId);
+    }
+  }, [personId, session_id_now, sessionOwnerId, isWelcome, navigate]);
 
   // Sync store → URL: navigate when session ID changes
   // null case is handled by Menu (startNewChat + navigate("/chat"))

@@ -40,15 +40,17 @@ const DriveHeader = () => {
     if (member_order.length === 0) fetchMemberOrder();
   }, [member_order.length, fetchMemberOrder]);
 
-  // can_view === false 的成员本来就不给看数据，列出来只会点了没反应
-  const members = useMemo(
-    () =>
-      sortMembersByOrder(
-        (beneficiary_users || []).filter((u) => u.can_view !== false),
-        member_order,
-      ),
-    [beneficiary_users, member_order],
-  );
+  // can_view === false 的成员本来就不给看数据，列出来只会点了没反应。
+  // 顺序：本人永远第一（这是"我在看谁"的起点），其余按用户自定义顺序。
+  const members = useMemo(() => {
+    const visible = (beneficiary_users || []).filter((u) => u.can_view !== false);
+    const self = visible.filter((u) => u.is_current_user);
+    const rest = sortMembersByOrder(
+      visible.filter((u) => !u.is_current_user),
+      member_order,
+    );
+    return [...self, ...rest];
+  }, [beneficiary_users, member_order]);
 
   // 成员还没拉回来时留一条同高的空位，别让下面的正文先顶上来、再被这排
   // chips 推下去 —— 那正是「点侧栏跳转时画面抖一下」的来源（CLS 实测 0.066）。
