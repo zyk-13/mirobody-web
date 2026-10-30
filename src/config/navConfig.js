@@ -46,25 +46,16 @@ const NAV_CONFIG = [
     i18nKey: "chat",
     tour: "sidebar-chat",
   },
-  // 档案 and 关爱圈 are two different things and are listed as two: one is your
-  // own record, the other is the people you share with. They were briefly a
-  // single "care circle" list nested under the workspace nav, which left the
-  // signed-in user's own record with nowhere to live.
+  // 档案 + 关爱圈已合并：两者本来就是同一件事的两半（我是谁 / 我管着谁），
+  // 拆成两个入口只会让人在两个页面之间来回找。旧路径 /profile、
+  // /care-circle 保留为跳转。
   {
-    key: "profile",
+    key: "people",
     section: "management",
-    path: "/profile",
-    matchPaths: ["/profile"],
-    i18nKey: "profile",
+    path: "/people",
+    matchPaths: ["/people", "/profile", "/care-circle"],
+    i18nKey: "people",
     tour: "sidebar-profile",
-  },
-  {
-    key: "care_circle",
-    section: "management",
-    path: "/care-circle",
-    matchPaths: ["/care-circle"],
-    i18nKey: "care_circle",
-    tour: "sidebar-care-circle",
   },
   // Note: the developer / API platform (cdm) deliberately is NOT a nav item —
   // it lives in the Settings modal as a highlighted card so it doesn't compete

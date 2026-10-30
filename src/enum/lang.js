@@ -13,6 +13,10 @@ export const LANGUAGE_CODE = {
 };
 
 // support language list
+//
+// 私有部署只保留 English + 简体中文（用户明确要求）。繁體中文与日本語的
+// 语言包仍留在 src/i18n/ 里，只是不再注册、不再出现在选择器里 —— 删文件
+// 会让上游同步变麻烦，注册了又没人用只是白增包体积。
 export const LANGUAGE_LIST = [
   {
     code: LANGUAGE_CODE.EN,
@@ -22,20 +26,4 @@ export const LANGUAGE_LIST = [
     code: LANGUAGE_CODE.ZH_CN,
     name: "简体中文",
   },
-  {
-    code: LANGUAGE_CODE.ZH_TW,
-    name: "繁體中文",
-  },
-  {
-    code: LANGUAGE_CODE.JA,
-    name: "日本語",
-  },
-  // {
-  //   code: LANGUAGE_CODE.FR,
-  //   name: "Français",
-  // },
-  // {
-  //   code: LANGUAGE_CODE.ES,
-  //   name: "Español",
-  // },
 ];

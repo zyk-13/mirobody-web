@@ -27,8 +27,7 @@ const NAV_ICONS = {
   indicators: IconActivity,
   drive: IconDatabase,
   chat: IconMessageCircle,
-  profile: IconUser,
-  care_circle: IconUsers,
+  people: IconUsers,
 };
 
 function SidebarBody({ collapsed = false }) {

@@ -2,8 +2,6 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import en from "../i18n/en.json";
 import zhCn from "../i18n/zh-cn.json";
-import zhTw from "../i18n/zh-tw.json";
-import ja from "../i18n/ja.json";
 import { LANGUAGE_CODE } from "../enum/lang.js";
 import { getLanguage } from "./index.js";
 
@@ -21,16 +19,6 @@ const initializeI18n = () => {
           ...zhCn,
         },
       },
-      [LANGUAGE_CODE.ZH_TW]: {
-        translation: {
-          ...zhTw,
-        },
-      },
-      [LANGUAGE_CODE.JA]: {
-        translation: {
-          ...ja,
-        },
-      },
     },
     // One source of truth for "what language is this user".
     //
@@ -44,6 +32,9 @@ const initializeI18n = () => {
     // was the right answer for everyone else anyway. With 繁體中文 and 日本語
     // shipping it means a Japanese visitor gets an English UI, which is the
     // whole point of shipping them.
+    // 不用 supportedLngs：实测它配合 nonExplicitSupportedLngs 会把 "zh-CN"
+    // 按 "zh" 判成不支持，整站回落英文（2026-10-30 撞过）。改在
+    // getLanguage()/normalizeLanguage 里把不支持的语言统一收口。
     lng: getLanguage(),
     fallbackLng: LANGUAGE_CODE.EN,
     interpolation: {

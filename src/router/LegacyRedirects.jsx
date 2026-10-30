@@ -12,3 +12,8 @@ export const LegacyChatRedirect = () => {
 };
 
 export const LegacyDriveRedirect = () => <Navigate to="/data" replace />;
+
+
+// 档案（/profile）与关爱圈（/care-circle）合并成 /people 一页后的旧路径跳转。
+// 侧栏只剩一个「人员档案」入口，但这两条 URL 在书签、聊天记录里都有。
+export const LegacyPeopleRedirect = () => <Navigate to="/people" replace />;

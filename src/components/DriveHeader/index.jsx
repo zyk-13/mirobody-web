@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Popover } from "antd";
 import { IconCheck, IconChevronDown } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
@@ -35,6 +35,22 @@ const DriveHeader = () => {
     () => beneficiary_users.find((user) => user.id === current_drive_user_id),
     [beneficiary_users, current_drive_user_id],
   );
+
+  // 给外部注入层（patches/frontend/app.js 的人物栏）一个直接切人的入口。
+  // 否则外部只能模拟「点开下拉 → 等选项渲染 → 点选项」，整套动画 1-2 秒，
+  // 观感就是「切换不够流畅」。这里用 id 反查真实对象，避免字符串/数字类型
+  // 不一致导致 current_drive_user 找不到、整个页头消失。
+  useEffect(() => {
+    window.__mbSetDriveUser = (id) => {
+      const target = useAccountStore
+        .getState()
+        .beneficiary_users.find((u) => String(u.id) === String(id));
+      if (target) setCurrentDriveUserId(target.id);
+    };
+    return () => {
+      delete window.__mbSetDriveUser;
+    };
+  }, [setCurrentDriveUserId]);
 
   if (!current_drive_user) return null;
 

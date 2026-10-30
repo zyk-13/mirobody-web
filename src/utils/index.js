@@ -26,9 +26,12 @@ const normalizeLanguage = (tag) => {
   const lower = String(tag).toLowerCase();
 
   if (lower.startsWith("zh")) {
-    if (lower.includes("hant")) return LANGUAGE_CODE.ZH_TW;
-    if (lower.includes("hans")) return LANGUAGE_CODE.ZH_CN;
-    return /-(tw|hk|mo)\b/.test(lower) ? LANGUAGE_CODE.ZH_TW : LANGUAGE_CODE.ZH_CN;
+    // 本部署只保留 en / zh-CN：繁體输入（hant / TW / HK / MO）一并收到简体，
+    // 否则 language 会指到一个没注册的语言包上，界面直接回落英文。
+    const zh = lower.includes("hant") || /-(tw|hk|mo)\b/.test(lower)
+      ? LANGUAGE_CODE.ZH_TW
+      : LANGUAGE_CODE.ZH_CN;
+    return LANGUAGE_LIST.some((lang) => lang.code === zh) ? zh : LANGUAGE_CODE.ZH_CN;
   }
 
   // Everything else matches on the primary subtag, so `ja-JP` finds `ja`.

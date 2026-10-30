@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Popover } from "antd";
 import { IconCompass, IconLogout, IconSettings } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
@@ -25,10 +25,32 @@ function AccountMenu({ collapsed = false }) {
   const user_email = useAccountStore((state) => state.user_email);
   const startTour = useTourStore((s) => s.start);
 
+  // 设置聚合：账号菜单里的「设置」直接进自建设置页（成员资料 / 模型供应商 /
+  // 应用），不再弹上游那个模态框。上游模态里的时区、安全、MCP、开发者平台
+  // 仍在，用 /data?mb-settings=1 深链打开 —— 自建页底部有入口。
   const openSettings = () => {
     setOpen(false);
-    setShowSettingModal(true);
+    window.location.href = "/settings.html";
   };
+
+  // 深链：自建设置页的按钮带 ?mb-settings=1 / ?mb-tour=1 回来，
+  // 分别打开上游设置模态、重播新手引导 —— 这两样都在 React 状态里，
+  // 外部页面只能借深链触发。
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("mb-settings") === "1") setShowSettingModal(true);
+    if (params.get("mb-tour") === "1") startTour();
+    if (params.get("mb-settings") || params.get("mb-tour")) {
+      params.delete("mb-settings");
+      params.delete("mb-tour");
+      const qs = params.toString();
+      window.history.replaceState(
+        {},
+        "",
+        window.location.pathname + (qs ? `?${qs}` : ""),
+      );
+    }
+  }, [startTour]);
 
   // The walkthrough plays once and can be skipped, so without this entry
   // anyone who dismissed it could never get it back. Close the popover first —

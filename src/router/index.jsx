@@ -2,7 +2,11 @@ import { lazy } from "react";
 import RootLayout from "./RootLayout.jsx";
 import ProtectedLayout from "./ProtectedLayout.jsx";
 import RouteError from "./RouteError.jsx";
-import { LegacyChatRedirect, LegacyDriveRedirect } from "./LegacyRedirects.jsx";
+import {
+  LegacyChatRedirect,
+  LegacyDriveRedirect,
+  LegacyPeopleRedirect,
+} from "./LegacyRedirects.jsx";
 import Landing from "./Landing.jsx";
 
 // Lazy load all page components for code splitting
@@ -10,8 +14,9 @@ const Login = lazy(() => import("../pages/Login/index.jsx"));
 const Chat = lazy(() => import("../pages/Chat/index.jsx"));
 const Drive = lazy(() => import("../pages/Drive/index.jsx"));
 const Share = lazy(() => import("../pages/Share/index.jsx"));
-const Profile = lazy(() => import("../pages/Profile/index.jsx"));
-const CareCircle = lazy(() => import("../pages/CareCircle/index.jsx"));
+// 档案 + 关爱圈已合并为「人员档案」一页；两个旧页组件保留但不再单独挂路由
+// （/profile、/care-circle 跳到这里），旧书签不至于 404。
+const People = lazy(() => import("../pages/People/index.jsx"));
 const Activate = lazy(() => import("../pages/Activate/index.jsx"));
 const Setup = lazy(() => import("../pages/Setup/index.jsx"));
 const Indicators = lazy(() => import("../pages/Indicators/index.jsx"));
@@ -81,15 +86,19 @@ export const routes = [
             path: "/data",
             Component: Drive,
           },
-          // 管理 — your own record, and everyone else's. Two nav items because
-          // they are two different things (see config/navConfig.js).
+          // 管理 — 人员档案：本人资料与家庭成员同页。原「档案 / 关爱圈」
+          // 两个入口合并成一个，旧路径保留跳转。
+          {
+            path: "/people",
+            Component: People,
+          },
           {
             path: "/profile",
-            Component: Profile,
+            Component: LegacyPeopleRedirect,
           },
           {
             path: "/care-circle",
-            Component: CareCircle,
+            Component: LegacyPeopleRedirect,
           },
           // Legacy paths → the renamed ones.
           {
