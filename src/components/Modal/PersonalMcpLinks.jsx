@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Popconfirm } from "antd";
 import consola from "consola";
 import api from "../../api";
+import { useAccountStore } from "../../store/account";
 import { linkDay, personLabel, splitLinks } from "./personalMcp.js";
 import styles from "./SettingModal.module.scss";
 
@@ -22,6 +23,8 @@ const PersonalMcpLinks = () => {
   const [minted, setMinted] = useState("");
   const [isCopied, setIsCopied] = useState(false);
   const [error, setError] = useState("");
+  const beneficiaries = useAccountStore((state) => state.beneficiary_users);
+  const fetchBeneficiaryUsers = useAccountStore((state) => state.fetchBeneficiaryUsers);
   const controllerRef = useRef(null);
   const copyTimeoutRef = useRef(null);
 
@@ -43,11 +46,17 @@ const PersonalMcpLinks = () => {
 
   useEffect(() => {
     load();
+    // 家人列表决定「为家人生成」有没有可选的人：设置页不经过数据页，名册得自己拉
+    fetchBeneficiaryUsers();
     return () => {
       controllerRef.current?.abort();
       if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
     };
-  }, [load]);
+  }, [load, fetchBeneficiaryUsers]);
+
+  const family = (beneficiaries || []).filter(
+    (u) => !u.is_current_user && u.can_view !== false,
+  );
 
   const run = async (action) => {
     setBusy(true);
@@ -68,6 +77,15 @@ const PersonalMcpLinks = () => {
   const create = () =>
     run(async () => {
       const { url } = await api.createPersonalMcp();
+      setMinted(url || "");
+      setIsCopied(false);
+    });
+
+  // 为家人建链接：一条链接只读一个人的记录，想让它问全家就得每人一条。
+  // 服务端按关爱圈校验「你能不能读这个人」，不能读会 403。
+  const createFor = (member) =>
+    run(async () => {
+      const { url } = await api.createPersonalMcp({ user_id: String(member.id) });
       setMinted(url || "");
       setIsCopied(false);
     });
@@ -169,6 +187,27 @@ const PersonalMcpLinks = () => {
             )}
           </div>
           <textarea className={styles.mcpUrlTextarea} value={minted} readOnly />
+        </div>
+      )}
+
+      {family.length > 0 && (
+        <div className="mt-3">
+          <div className={styles.mcpLinkSubtitle}>{t("mcp_link_for_family")}</div>
+          <div className="text-[12px] text-[var(--color-text-secondary)] leading-relaxed mb-2">
+            {t("mcp_link_for_family_hint")}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {family.map((member) => (
+              <Button
+                key={member.id}
+                size="small"
+                disabled={busy}
+                onClick={() => createFor(member)}
+              >
+                {member.name || member.nickname || t("me")}
+              </Button>
+            ))}
+          </div>
         </div>
       )}
 

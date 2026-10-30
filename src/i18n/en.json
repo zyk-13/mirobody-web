@@ -495,6 +495,8 @@
   "file_view_unauthorized": "Sign in again to open this file.",
   "mcp_url_hint": "Paste into an MCP client on this computer: Claude Code, Codex, Cursor and Gemini CLI take the link as it is, and Claude Desktop through the mcp-remote bridge (the README has each setup). ChatGPT and claude.ai connect from the cloud, so they need an HTTPS address they can reach. The link is your personal credential — keep it secret.",
   "mcp_link_title": "MCP link",
+  "mcp_link_for_family": "Generate a link for a family member",
+  "mcp_link_for_family_hint": "One link reads one person's record. To let a client ask about the whole family, make one per member and name them apart in its MCP config.",
   "mcp_link_generate": "Create link",
   "mcp_link_regenerate": "Regenerate",
   "mcp_link_regenerate_confirm": "The current link stops working at once. Make a new one?",

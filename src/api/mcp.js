@@ -11,9 +11,12 @@ export const listPersonalMcp = (signal) => {
   return mcpRequestInstance.get("/personal/mcp", { signal });
 };
 
-// A new link for the caller's own record; the old one stops working.
-export const createPersonalMcp = (signal) => {
-  return mcpRequestInstance.post("/personal/mcp", {}, { signal });
+// A new link for one record: the caller's own by default, or a family member's
+// when `user_id` is given (the server checks the care circle). Replaces that
+// person's existing link, so this doubles as "regenerate".
+export const createPersonalMcp = ({ user_id } = {}, signal) => {
+  const body = user_id ? { user_id } : {};
+  return mcpRequestInstance.post("/personal/mcp", body, { signal });
 };
 
 // Revoke one link: one the caller made, or one reading the caller's record.

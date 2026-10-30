@@ -495,6 +495,8 @@
   "file_view_unauthorized": "登录状态已失效，请重新登录后再打开该文件。",
   "mcp_url_hint": "粘贴到这台电脑上的 MCP 客户端：Claude Code、Codex、Cursor、Gemini CLI 直接用这个链接，Claude Desktop 经 mcp-remote 桥接（各自的配置见 README）。ChatGPT 和 claude.ai 从云端连接，需要一个它们能访问到的 HTTPS 地址。链接就是你的个人凭证，请妥善保管。",
   "mcp_link_title": "MCP 链接",
+  "mcp_link_for_family": "为家人生成链接",
+  "mcp_link_for_family_hint": "一条链接只读一个人的记录。要让客户端能问全家，给每位家人各生成一条，在客户端的 MCP 配置里各自命名（如 mirobody-孩子）。",
   "mcp_link_generate": "生成链接",
   "mcp_link_regenerate": "重新生成",
   "mcp_link_regenerate_confirm": "当前链接会立即失效。确定重新生成？",
