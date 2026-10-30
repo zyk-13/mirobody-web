@@ -1,18 +1,95 @@
-/* 本人区：身份条 + 字段行本来各带一套 border/radius/background，上下叠起来
-   是两张卡、中间一道缝 —— 读起来像「头像卡」和「资料卡」两件不相干的东西。
-   包一层外卡，内部一律去边框去圆角去底色，合成一整块。
+/* 本人区：一张卡，身份行在上、字段 2×2 网格在下。
+   不复用 Profile 的样式类 —— 那里是一行一个字段的纵向表单，标签在最左、
+   控件缩在右侧 220px，中间一整条空白，四个字段占掉半屏（「本人面积太大」）。
+   这里用自己的类，标签收到控件上方，两列并排。 */
 
-   子选择器优先级（0,2,0）高于单类（0,1,0），不用 !important 也能压住
-   Profile / CareCircle 那两个模块里的 .identity / .rows。 */
 .me_card {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
   overflow: hidden;
+}
 
-  > * {
-    border: none;
-    border-radius: 0;
-    background: transparent;
+.me_identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+.me_avatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.me_identity_text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.me_identity_name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.me_identity_email {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  word-break: break-all;
+}
+
+.me_rows {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.me_row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.me_label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.me_control {
+  width: 100%;
+}
+
+.me_derived {
+  font-size: 14px;
+  color: var(--color-text-primary);
+  /* 与旁边的输入框同高，网格里才对齐 */
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.me_derived_empty {
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 768px) {
+  .me_rows {
+    grid-template-columns: 1fr;
   }
 }

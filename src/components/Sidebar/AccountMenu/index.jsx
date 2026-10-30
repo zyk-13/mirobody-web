@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Popover } from "antd";
-import { IconCompass, IconLogout, IconSettings } from "@tabler/icons-react";
+import { IconCompass, IconLogout } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
 import { useAccountStore } from "../../../store/account";
 import { clearAuthenticationData } from "../../../utils/auth.js";
 import { useTourStore } from "../../../store/tour";
@@ -14,22 +13,15 @@ const initialOf = (name, email) =>
 /**
  * Who you are signed in as, plus the two things you do about it.
  *
- * 设置入口现在直接进 /settings 路由：语言、时区、模型、成员、MCP 都在那一页，
- * 不再弹上游的模态框。两套设置界面并存过一版 —— 账号菜单弹一个、侧栏又跳一个
- * 独立 html，里面内容还不重叠，那才是真正难用的地方。
+ * 「设置」曾经也在这里，但侧栏已经有了常驻的设置导航项 —— 同一个入口放两处，
+ * 用户会困惑哪个是真的。弹层只留引导重放与退出登录这两件「关于账号本身」的事。
  */
 function AccountMenu({ collapsed = false }) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const user_name = useAccountStore((state) => state.user_name);
   const user_email = useAccountStore((state) => state.user_email);
   const startTour = useTourStore((s) => s.start);
-
-  const openSettings = () => {
-    setOpen(false);
-    navigate("/settings");
-  };
 
   // The walkthrough plays once and can be skipped, so without this entry
   // anyone who dismissed it could never get it back. Close the popover first —
@@ -47,10 +39,6 @@ function AccountMenu({ collapsed = false }) {
 
   const content = (
     <div className={styles.panel}>
-      <button type="button" className={styles.item} onClick={openSettings}>
-        <IconSettings size={16} stroke={1.6} />
-        <span>{t("settings")}</span>
-      </button>
       <button type="button" className={styles.item} onClick={replayTour}>
         <IconCompass size={16} stroke={1.6} />
         <span>{t("tour_replay")}</span>

@@ -1,16 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import i18n from "i18next";
-import { useNavigate } from "react-router";
-import { Select, Switch } from "antd";
+import { Select } from "antd";
 import {
-  IconCheck,
-  IconChevronRight,
   IconPencil,
   IconPlus,
   IconTrash,
-  IconUserPlus,
-  IconX,
 } from "@tabler/icons-react";
 import Sidebar, { MobileTopBar } from "../../components/Sidebar";
 import PersonalMcpLinks from "../../components/Modal/PersonalMcpLinks";
@@ -22,7 +17,9 @@ import styles from "./index.module.scss";
 
 /* ---------------------------------------------------------------- 自定义接口 */
 /* 模型供应商读写走 /api/custom/models（补丁提供的行级 YAML 编辑接口）。
-   api_key 只填 .env 里的变量名，值本身不进前端 —— 密钥不该在浏览器里过一遍。 */
+   api_key 仍是 .env 风格的变量名，但密钥值可以当场粘贴：PUT /api/custom/keys
+   把它写进服务端的密钥库（容器内 os.environ 即时生效 + 落盘持久），
+   值本身只进不出 —— 接口只回「在不在」，不回显内容。 */
 const authedFetch = async (path, method = "GET", body) => {
   const res = await fetch(`/api/custom${path}`, {
     method,
@@ -34,7 +31,7 @@ const authedFetch = async (path, method = "GET", body) => {
   });
   const json = await res.json().catch(() => ({}));
   const ok = res.ok && (json.code === 0 || json.code === undefined);
-  if (!ok) throw new Error(json.message || `请求失败（HTTP ${res.status}）`);
+  if (!ok) throw new Error(json.message || json.msg || `请求失败（HTTP ${res.status}）`);
   return json.data ?? json;
 };
 
@@ -42,6 +39,7 @@ const BLANK_MODEL = {
   name: "",
   llm_type: "openai",
   api_key: "",
+  api_key_value: "", // 仅本次提交用，保存后丢弃，不回显
   base_url: "",
   model: "",
   temperature: 0.1,
@@ -101,6 +99,20 @@ function ModelForm({ value, onChange, onSubmit, onCancel, busy, t }) {
           <input value={value.api_key} onChange={set("api_key")} placeholder="DEEPSEEK_API_KEY" />
         </label>
         <label className={styles.field}>
+          <span>{t("settings_model_keyvalue")}</span>
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={value.api_key_value || ""}
+            onChange={set("api_key_value")}
+            placeholder={
+              value.key_present
+                ? t("settings_model_keyvalue_ph_keep")
+                : t("settings_model_keyvalue_ph_new")
+            }
+          />
+        </label>
+        <label className={styles.field}>
           <span>{t("settings_model_model")}</span>
           <input value={value.model || ""} onChange={set("model")} placeholder="deepseek-chat" />
         </label>
@@ -144,7 +156,6 @@ function ModelForm({ value, onChange, onSubmit, onCancel, busy, t }) {
 /* ---------------------------------------------------------------- 页面 */
 export default function Settings() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const email = localStorage.getItem(USER_EMAIL) || "";
 
   const [lang, setLang] = useState(i18n.language);
@@ -221,8 +232,14 @@ export default function Settings() {
     setBusy(true);
     setModelError("");
     try {
+      // 先存密钥再存模型：模型保存失败可以重来，密钥写了一半才尴尬
+      const keyValue = (draft.api_key_value || "").trim();
+      if (keyValue) {
+        await authedFetch("/keys", "PUT", { var: draft.api_key.trim(), value: keyValue });
+      }
+      const { api_key_value, ...rest } = draft;
       const body = {
-        ...draft,
+        ...rest,
         temperature: Number(draft.temperature) || 0.1,
         base_url: draft.base_url || null,
         model: draft.model || null,
@@ -356,27 +373,6 @@ export default function Settings() {
                   {t("logout")}
                 </button>
               </div>
-            </section>
-
-            {/* ── 家庭与成员 ─────────────────────────────────────── */}
-            <section className={styles.card}>
-              <div className={styles.card_head}>
-                <span className={styles.card_title}>{t("settings_family")}</span>
-              </div>
-              <button
-                type="button"
-                className={styles.link_row}
-                onClick={() => navigate("/people")}
-              >
-                <span className={styles.link_icon}>
-                  <IconUserPlus size={16} stroke={1.8} />
-                </span>
-                <span className={styles.link_body}>
-                  <span className={styles.link_title}>{t("people")}</span>
-                  <span className={styles.hint}>{t("settings_family_hint")}</span>
-                </span>
-                <IconChevronRight size={16} stroke={1.8} className={styles.link_chevron} />
-              </button>
             </section>
 
             {/* ── 模型供应商 ─────────────────────────────────────── */}

@@ -272,22 +272,22 @@ const PeoplePage = () => {
                 {saving && <span className={pStyles.saving}>{t("profile_saving")}</span>}
               </div>
               <div className={sStyles.me_card}>
-              <div className={pStyles.identity}>
-                <span className={pStyles.avatar}>{initial}</span>
-                <div className={pStyles.identity_text}>
-                  <div className={pStyles.identity_name}>{displayName}</div>
-                  {user_email && <div className={pStyles.identity_email}>{user_email}</div>}
+              <div className={sStyles.me_identity}>
+                <span className={sStyles.me_avatar}>{initial}</span>
+                <div className={sStyles.me_identity_text}>
+                  <div className={sStyles.me_identity_name}>{displayName}</div>
+                  {user_email && <div className={sStyles.me_identity_email}>{user_email}</div>}
                 </div>
               </div>
 
-              <div className={pStyles.rows}>
-                <div className={pStyles.row}>
-                  <label className={pStyles.row_label} htmlFor="people-gender">
+              <div className={sStyles.me_rows}>
+                <div className={sStyles.me_row}>
+                  <label className={sStyles.me_label} htmlFor="people-gender">
                     {t("gender")}
                   </label>
                   <Select
                     id="people-gender"
-                    className={pStyles.control}
+                    className={sStyles.me_control}
                     options={genderOptions}
                     value={form?.gender}
                     loading={loading}
@@ -296,13 +296,13 @@ const PeoplePage = () => {
                     onChange={(v) => save({ gender: v })}
                   />
                 </div>
-                <div className={pStyles.row}>
-                  <label className={pStyles.row_label} htmlFor="people-birth">
+                <div className={sStyles.me_row}>
+                  <label className={sStyles.me_label} htmlFor="people-birth">
                     {t("birth_date")}
                   </label>
                   <DatePicker
                     id="people-birth"
-                    className={pStyles.control}
+                    className={sStyles.me_control}
                     value={form?.birth || null}
                     disabled={loading}
                     placeholder={t("profile_not_set")}
@@ -311,23 +311,13 @@ const PeoplePage = () => {
                     onChange={(d) => save({ birth: d })}
                   />
                 </div>
-                <div className={pStyles.row}>
-                  <span className={pStyles.row_label}>{t("age")}</span>
-                  <span
-                    className={`${pStyles.derived} ${
-                      me?.age ? "" : pStyles.derived_empty
-                    }`}
-                  >
-                    {me?.age || t("profile_from_birth")}
-                  </span>
-                </div>
-                <div className={pStyles.row}>
-                  <label className={pStyles.row_label} htmlFor="people-blood">
+                <div className={sStyles.me_row}>
+                  <label className={sStyles.me_label} htmlFor="people-blood">
                     {t("blood_type")}
                   </label>
                   <Select
                     id="people-blood"
-                    className={pStyles.control}
+                    className={sStyles.me_control}
                     options={bloodOptions}
                     value={form?.blood}
                     loading={loading}
@@ -335,6 +325,16 @@ const PeoplePage = () => {
                     placeholder={t("profile_not_set")}
                     onChange={(v) => save({ blood: v })}
                   />
+                </div>
+                <div className={sStyles.me_row}>
+                  <span className={sStyles.me_label}>{t("age")}</span>
+                  <span
+                    className={`${sStyles.me_derived} ${
+                      me?.age ? "" : sStyles.me_derived_empty
+                    }`}
+                  >
+                    {me?.age || t("profile_from_birth")}
+                  </span>
                 </div>
               </div>
               </div>
